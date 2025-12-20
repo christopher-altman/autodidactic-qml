@@ -91,14 +91,15 @@ class TestSpectralMassInvariant:
     
     def test_stability_over_time(self):
         """Test that invariant keeps spectral mass stable."""
+        rng = np.random.default_rng(0)
         inv = SpectralMassInvariant(epsilon=0.01)
-        M = np.random.randn(10, 10)
+        M = rng.standard_normal((10, 10))
         M = (M + M.T) / 2
         I0 = inv.initialize(M)
         
         # Apply many updates
         for _ in range(100):
-            delta_M = 0.1 * np.random.randn(10, 10)
+            delta_M = 0.1 * rng.standard_normal((10, 10))
             delta_M = (delta_M + delta_M.T) / 2
             M, _ = inv.corrected_update(M, delta_M)
             inv.log_step(M)
