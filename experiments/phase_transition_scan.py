@@ -1,7 +1,17 @@
 from __future__ import annotations
 import argparse
 import numpy as np
-from tqdm import tqdm
+
+
+def _require_tqdm():
+    try:
+        from tqdm import tqdm
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "This experiment uses tqdm progress bars. Install it with:\n"
+            "  pip install tqdm"
+        ) from exc
+    return tqdm
 
 from matrix_models.hermitian_ensemble import HermitianEnsemble
 from matrix_models.action_functionals import CubicAction, QuarticAction
@@ -24,6 +34,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    tqdm = _require_tqdm()
     rng = np.random.default_rng(args.seed)
     ens = HermitianEnsemble(dim=args.dim, scale=1.0, seed=args.seed)
     diag = SpectralDiagnostics()
@@ -32,7 +43,7 @@ def main():
     gs = np.linspace(args.g_min, args.g_max, args.points)
     radii, stds, actions = [], [], []
 
-    for g in tqdm(gs):
+    for g in tqdm(gs, desc="scan g", unit="g"):
         M0 = ens.sample(rng=rng)
         if args.stabilize:
             # Use cubic + quartic stabilizer by composing gradients

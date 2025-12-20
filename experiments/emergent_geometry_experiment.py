@@ -1,7 +1,17 @@
 from __future__ import annotations
 import argparse
 import numpy as np
-from tqdm import tqdm
+
+
+def _require_tqdm():
+    try:
+        from tqdm import tqdm
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "This experiment uses tqdm progress bars. Install it with:\n"
+            "  pip install tqdm"
+        ) from exc
+    return tqdm
 
 from matrix_models.hermitian_ensemble import HermitianEnsemble
 from matrix_models.action_functionals import CubicAction
@@ -19,13 +29,16 @@ def parse_args():
 
 def main():
     args = parse_args()
+    tqdm = _require_tqdm()
     rng = np.random.default_rng(args.seed)
     ens = HermitianEnsemble(dim=args.dim, seed=args.seed)
     M0 = ens.sample(rng=rng)
 
     act = CubicAction(g=args.g)
     sampler = LangevinSampler(action=act, seed=args.seed)
-    M = sampler.run(M0, steps=args.steps, rng=rng)
+    M = M0.copy()
+    for _ in tqdm(range(args.steps), desc="langevin steps", unit="step"):
+        M = sampler.step(M, rng=rng)
 
     geom = SpectralGeometry(bandwidth=1.0)
     summ = geom.summarize(M)
