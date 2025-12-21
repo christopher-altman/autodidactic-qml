@@ -349,8 +349,8 @@ This repository includes pre-registered falsification protocols for testing spec
 
 | Protocol | Description | File |
 |----------|-------------|------|
-| **KT-1** | Topology–Perturbation memory test (SQNT plasticity) | `protocols/KT1_FALSIFICATION_PROTOCOL.md` |
-| **KT-2** | Local recoverability of functional identity (CI) | `protocols/KT2_FALSIFICATION_PROTOCOL.md` |
+| **KT-1** | Topology–Perturbation memory test (SQNT plasticity) | `docs/protocols/KT1_TOPOLOGY_MEMORY.md` |
+| **KT-2** | Local recoverability of functional identity (CI) | `docs/kt2_protocol.md` |
 
 ### KT-2: Local Functional Recoverability
 
@@ -596,14 +596,14 @@ autodidactic-qml/
 ├── experiments/
 │   ├── kt1_continuation_interest.py
 │   └── kt2_locality_falsifier.py
-├── src/
-│   ├── ucip_detection/
-│   ├── correspondence_maps/
-│   ├── matrix_models/
-│   └── topology/
+├── ucip_detection/
+├── correspondence_maps/
+├── matrix_models/
+├── topology/
 ├── tests/
 ├── notebooks/
 └── results/
+
 ```
 
 ---
@@ -653,7 +653,7 @@ Treat diffusion purification as the recovery step and define “function” expl
 
 ## References
 
-1. C. Altman, J. Pykacz & R. Zapatrin, “Superpositional Quantum Network Topologies,” *International Journal of Theoretical Physics* 43, 2029–2041 (2004).  
+1. C. Altman, J. Pykacz & R. Zapatrin, “Superpositional Quantum Network Topologies,” *International Journal of Theoretical Physics* 43, 2029–2041 (2004).
    DOI: [10.1023/B:IJTP.0000049008.51567.ec](https://doi.org/10.1023/B:IJTP.0000049008.51567.ec) · arXiv: [q-bio/0311016](https://arxiv.org/abs/q-bio/0311016)
 
 2. C. Altman & R. Zapatrin, “Backpropagation in Adaptive Quantum Networks,” *International Journal of Theoretical Physics* 49, 2991–2997 (2010).  
