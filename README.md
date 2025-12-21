@@ -1,7 +1,5 @@
 # Autodidactic QML Loop Falsifier
 
-
-
 *A controlled, falsifiable testbed for quantum‑inspired recursive law learning under measurement invariants.*
 
 <br>
@@ -29,15 +27,11 @@
 
 ```bash
 pip install -e . && python -m experiments.kt2_locality_falsifier --run-decisive --quiet
+```
 
-<br>
 
 <details>
 <summary><b>Executive Summary</b> (click to expand)</summary>
-
-<br>
-
-<br>
 
 **The Problem:** Alignment and interpretability research often assumes that if you restore a neural network's local structure (weights, representations, gradients, curvature), you restore its behavior. This assumption underpins model editing, fine-tuning stability claims, and monitoring approaches.
 
@@ -50,7 +44,6 @@ pip install -e . && python -m experiments.kt2_locality_falsifier --run-decisive 
 **What's Here:** Runnable code, fixed protocols, deterministic seeds, no hyperparameter sweeps. Every claim is tied to an experiment you can reproduce in minutes on CPU.
 
 </details>
-
 
 <br>
 
