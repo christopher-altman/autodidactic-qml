@@ -40,6 +40,9 @@ import subprocess
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Any
+import sys
+import platform
+
 
 import numpy as np
 import torch
@@ -69,6 +72,8 @@ from ucip_detection.nonlocality_probe import (
     HysteresisResult,
     compute_step_size_envelope,
     compute_step_size_envelope_all_constraints,
+    collect_triads_across_seeds,
+    DecouplingAnalysis,
 )
 
 
@@ -108,6 +113,93 @@ def get_git_hash() -> str:
         return result.stdout.strip()[:12]
     except Exception:
         return "unknown"
+
+
+def get_provenance_metadata(command: str = "run-decisive") -> Dict[str, Any]:
+    """Generate reproducible artifact metadata (Fail-Soft)."""
+    # 1. Establish baseline (Always Present)
+    meta = {
+        "timestamp_utc": datetime.utcnow().isoformat() + "Z",
+        "command": " ".join(sys.argv),
+        "cwd": os.getcwd(),
+        "seeds": {
+            "PERTURB": PERTURB_SEED,
+            "EVAL": EVAL_SEED,
+            "RECOVERY": RECOVERY_SEED
+        },
+        "run_params": {
+            "entrypoint": "experiments.kt2_locality_falsifier",
+            "mode": command,
+            "ci_threshold": CI_THRESHOLD,
+            "k": 1,  # Decisive test is strictly 1-step
+            "dim": DEFAULT_DIM,
+            "hidden": DEFAULT_HIDDEN,
+            "lr": DEFAULT_LR,
+            "perturb_strength": DEFAULT_PERTURB_STRENGTH
+        }
+    }
+
+    errors = []
+
+    # 2. Safe Platform Info
+    try:
+        meta["platform"] = {
+            "os": platform.system(),
+            "machine": platform.machine(),
+            "python": platform.python_version()
+        }
+    except Exception as e:
+        meta["platform"] = {"error": str(e)}
+        errors.append(f"Platform: {e}")
+
+    # 3. Git Info (Fail-Soft)
+    try:
+        git_commit = get_git_hash()
+        git_dirty = subprocess.run(
+            ["git", "status", "--porcelain"], 
+            capture_output=True, text=True, timeout=2
+        ).stdout.strip() != ""
+    except Exception as e:
+        git_commit = None
+        git_dirty = None
+        # We don't necessarily flag this as a critical error, just missing info
+        # But if the user wants 'meta_error' on failure, we can add it if it was an exception.
+        # The previous requirement said "If git isn't available ... set null", which is what we did.
+        # But if unexpected exception, we track it.
+        if isinstance(e, subprocess.TimeoutExpired):
+             errors.append("Git: Timeout")
+        elif isinstance(e, FileNotFoundError):
+             pass # just no git
+        else:
+             errors.append(f"Git: {e}")
+
+    meta["repo"] = {
+        "name": "autodidactic-qml",
+        "git_commit": git_commit if git_commit != "unknown" else None,
+        "git_dirty": git_dirty
+    }
+
+    # 4. Dependencies (Fail-Soft)
+    deps = {}
+    try:
+        import pkg_resources
+        for pkg in ["numpy", "scipy", "pandas", "pennylane", "torch"]:
+            try:
+                deps[pkg] = pkg_resources.get_distribution(pkg).version
+            except Exception:
+                pass
+    except ImportError:
+        pass
+    except Exception as e:
+        errors.append(f"Deps: {e}")
+    
+    meta["dependencies"] = deps
+
+    # 5. Attach errors if any
+    if errors:
+        meta["meta_error"] = "; ".join(errors)
+
+    return meta
 
 
 class WrappedRNN(torch.nn.Module):
@@ -378,6 +470,49 @@ def run_full_protocol(
     }
 
 
+
+def run_decoupling_analysis(
+    dim: int = DEFAULT_DIM,
+    hidden: int = DEFAULT_HIDDEN,
+    seeds: List[int] = None,
+    verbose: bool = True,
+) -> Dict[str, Any]:
+    """Run distance-triad decoupling analysis across multiple seeds."""
+    if verbose:
+        print("\n" + "="*70)
+        print("KT-2 DECOUPLING ANALYSIS")
+        print("="*70)
+    
+    if seeds is None:
+        seeds = ENSEMBLE_SEEDS
+
+    # Factory for collect_triads
+    def model_factory(seed: int) -> torch.nn.Module:
+        return create_model(seed=seed, dim=dim, hidden=hidden)
+    
+    triads, analysis = collect_triads_across_seeds(
+        model_factory=model_factory,
+        seeds=seeds,
+        constraint_type="shape", # Primary proxy for decoupling test
+        k=1,
+        perturb_seed=PERTURB_SEED,
+        eval_seed=EVAL_SEED,
+        recovery_seed=RECOVERY_SEED,
+        verbose=verbose
+    )
+    
+    return {
+        "protocol_id": PROTOCOL_ID,
+        "protocol_version": PROTOCOL_VERSION,
+        "test": "decoupling_analysis",
+        "git_hash": get_git_hash(),
+        "timestamp": datetime.now().isoformat(),
+        "seeds_used": seeds,
+        "analysis": analysis.to_dict(),
+        "triads": [t.to_dict() for t in triads]
+    }
+
+
 def save_results(results: Dict[str, Any], filepath: str) -> None:
     """Save results to JSON file."""
     os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
@@ -408,6 +543,8 @@ def main():
                         help="Run step-size envelope (best 1-step CI over η grid)")
     parser.add_argument("--full-protocol", action="store_true",
                         help="Run complete protocol with all diagnostics")
+    parser.add_argument("--decoupling-analysis", action="store_true",
+                        help="Run distance-triad decoupling analysis (correlation across seeds)")
     
     # Model parameters
     parser.add_argument("--dim", type=int, default=DEFAULT_DIM,
@@ -418,7 +555,7 @@ def main():
                         help="Seed for model initialization/training (default: 0)")
     
     # Output
-    parser.add_argument("--output-dir", type=str, default="experiments/outputs/kt2",
+    parser.add_argument("--output-dir", type=str, default="results",
                         help="Output directory for artifacts")
     parser.add_argument("--quiet", action="store_true",
                         help="Suppress verbose output")
@@ -433,7 +570,7 @@ def main():
         args.full_protocol = False
 
     # Default to full protocol if nothing specified
-    if not any([args.run_decisive, args.k_step_curve, args.hysteresis, args.step_envelope, args.full_protocol]):
+    if not any([args.run_decisive, args.k_step_curve, args.hysteresis, args.step_envelope, args.full_protocol, args.decoupling_analysis]):
         args.full_protocol = True
     
     verbose = not args.quiet
@@ -450,7 +587,11 @@ def main():
     else:
         if args.run_decisive:
             results = run_decisive_1step(model, verbose=verbose)
-            save_results(results, os.path.join(args.output_dir, "kt2_decisive_1step.json"))
+            results["meta"] = get_provenance_metadata("run-decisive")
+            
+            # Explicitly target the requested canonical path
+            out_path = os.path.join(args.output_dir, "kt2_decisive_1step.json")
+            save_results(results, out_path)
         
         if args.k_step_curve:
             results = run_k_step_curve(model, verbose=verbose)
@@ -492,6 +633,10 @@ def main():
                 "all_fail": all(not r.is_locally_recoverable() for r in envelope_results.values()),
             }
             save_results(results, os.path.join(args.output_dir, "kt2_step_envelope.json"))
+        
+        if args.decoupling_analysis:
+            results = run_decoupling_analysis(dim=args.dim, hidden=args.hidden, verbose=verbose)
+            save_results(results, os.path.join(args.output_dir, "kt2_decoupling.json"))
     
     if verbose:
         print("\n" + "="*70)
