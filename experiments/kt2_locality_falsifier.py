@@ -182,25 +182,20 @@ def get_provenance_metadata(command: str = "run-decisive") -> Dict[str, Any]:
     # 4. Dependencies (Fail-Soft)
     deps = {}
     try:
-        import pkg_resources
+        from importlib import metadata as importlib_metadata  # Python >= 3.8
         for pkg in ["numpy", "scipy", "pandas", "pennylane", "torch"]:
             try:
-                deps[pkg] = pkg_resources.get_distribution(pkg).version
+                deps[pkg] = importlib_metadata.version(pkg)
+            except importlib_metadata.PackageNotFoundError:
+                pass
             except Exception:
                 pass
-    except ImportError:
-        pass
     except Exception as e:
         errors.append(f"Deps: {e}")
-    
+        
     meta["dependencies"] = deps
-
-    # 5. Attach errors if any
-    if errors:
-        meta["meta_error"] = "; ".join(errors)
-
+    
     return meta
-
 
 class WrappedRNN(torch.nn.Module):
     """Wrapper for cyclic RNN with fc adapters for CI metric compatibility."""
@@ -646,3 +641,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
