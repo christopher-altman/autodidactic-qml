@@ -23,7 +23,12 @@
 
 > **TL;DR:** Geometric proximity ≠ functional proximity. This repository provides reproducible evidence that restoring local parameter/representation/gradient structure does not restore behavior in neural networks.
 
+<br>
 
+### Quickstart (one command)
+
+```bash
+pip install -e . && python -m experiments.kt2_locality_falsifier --run-decisive --quiet
 
 <br>
 
