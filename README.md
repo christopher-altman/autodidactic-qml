@@ -1,9 +1,33 @@
 # Autodidactic QML Loop Falsifier
 
+
+
+*A controlled, falsifiable testbed for quantum‑inspired recursive law learning under measurement invariants.*
+
+<br>
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Google Scholar](https://img.shields.io/badge/Google_Scholar-Profile-blue?logo=google-scholar)](https://scholar.google.com/citations?user=tvwpCcgAAAAJ)
+[![Hugging Face](https://img.shields.io/badge/huggingface-Cohaerence-white)](https://huggingface.co/Cohaerence)
+[![X](https://img.shields.io/badge/X-@coherence-blue)](https://x.com/coherence)
+[![Website](https://img.shields.io/badge/website-christopheraltman.com-green)](https://www.christopheraltman.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Christopher%20Altman-blue?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/Altman)
+<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+
+
+<br>
+
 > **TL;DR:** Geometric proximity ≠ functional proximity. This repository provides reproducible evidence that restoring local parameter/representation/gradient structure does not restore behavior in neural networks.
+
+
+
+<br>
 
 <details>
 <summary><b>Executive Summary</b> (click to expand)</summary>
+
+<br>
 
 <br>
 
@@ -13,23 +37,15 @@
 
 **What We Found:** They don't. Across all tested constraint families (weight proximity, spectral moments, representation similarity, Jacobian alignment, Hessian-vector products), single-step recovery succeeds at matching the proxy while failing to recover behavior. The three natural distance metrics—parameter distance, representation distance, and functional distance—decouple sharply.
 
-**Why It Matters:** This is a concrete counterexample to locality assumptions. If proxy-based recovery fails in a system this simple, claims that it "obviously works" at scale require empirical validation, not assumption. The possibility of **functional aliases**—states that look correct by common probes but implement different programs—has direct implications for oversight.
+**Why It Matters:** This is a concrete counterexample to locality assumptions. If proxy-based recovery fails in a system this simple, claims that it “obviously works” at scale require empirical validation, not assumption. The possibility of **functional aliases**—states that look correct by common probes but implement different programs—has direct implications for oversight.
 
 **What's Here:** Runnable code, fixed protocols, deterministic seeds, no hyperparameter sweeps. Every claim is tied to an experiment you can reproduce in minutes on CPU.
 
 </details>
 
-*A controlled, falsifiable testbed for SQNT-inspired recursive law learning under measurement invariants.*
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Google Scholar](https://img.shields.io/badge/Google_Scholar-Profile-blue?logo=google-scholar)](https://scholar.google.com/citations?user=tvwpCcgAAAAJ)
-[![Hugging Face](https://img.shields.io/badge/huggingface-Cohaerence-green)](https://huggingface.co/Cohaerence)
-[![X](https://img.shields.io/badge/X-@coherence-white)](https://x.com/coherence)
-[![Website](https://img.shields.io/badge/website-christopheraltman.com-blue)](https://www.christopheraltman.com)
-<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+<br>
 
----
 
 ## Headline Result
 
@@ -39,7 +55,9 @@ In this system, functional identity is not locally recoverable—at 0th order (w
 
 This is a **designed falsifier**: fixed protocol, fixed seeds, no hyperparameter sweeps, and no degrees of freedom left to absorb failure.
 
+
 ---
+
 
 ## Abstract
 
@@ -87,9 +105,9 @@ We study two falsifiable questions about recoverability in recursive self-updati
 
 1. **Local functional recoverability (KT-2):** After a controlled perturbation, can a single recovery step move the system back toward its pre-perturbation behavior, under constraints that preserve local geometry/topology proxies?
 
-2. **Persistence-bias probes (UCIP modules):** In minimal decision systems with explicit internal self-model machinery, can we detect a persistence-like preference signal under intervention tests without attributing intent, consciousness, or "persistence bias" in the human sense?
+2. **Persistence-bias probes (UCIP modules):** In minimal decision systems with explicit internal self-model machinery, can we detect a persistence-like preference signal under intervention tests without attributing intent, consciousness, or “persistence bias” in the human sense?
 
-The SQNT-inspired matrix loop supplies the substrate (self-measurement → update), while KT-2 measures whether functional identity is locally encoded in the same neighborhood as natural proxy constraints (spectral/representation/Jacobian/HVP).
+The **Superpositional Quantum Network Topologies (SQNT)**-inspired matrix loop supplies the substrate (self-measurement → update) for our experiments, while KT-2 measures whether functional identity is locally encoded in the same neighborhood as natural proxy constraints (spectral/representation/Jacobian/HVP).
 
 The recovery statistic is **Continuation Interest (CI):**
 
@@ -128,22 +146,69 @@ A deterministic **PRE → POST → RECOVER** pipeline with fixed seeds implement
 
 ## Autodidactic Loop Schematic
 
-*Text-only schematic (for terminals and diffs):*
+*Text-only schematic (for terminals and diffs; includes the KT-2 evaluation wrapper):*
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Matrix Model   │────▶│  Correspondence  │────▶│   Cyclic RNN    │
-│  (Hermitian)    │     │     Map          │     │   Architecture  │
-└─────────────────┘     └──────────────────┘     └────────┬────────┘
-                                                          │
-                                                          ▼
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   CI Metric     │◀────│    Perturb +     │◀────│  Autodidactic   │
-│   Evaluation    │     │    Recover       │     │    Training     │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
+
+  ┌────────────────────────┐
+  │   Matrix / State (W)   │
+  │      (Hermitian)       │
+  └───────────┬────────────┘
+              │
+              v
+  ┌────────────────────────┐
+  │    Correspondence Map   │
+  │   (W → RNN parameters)  │
+  └───────────┬────────────┘
+              │
+              v
+  ┌────────────────────────┐
+  │   Learner Instantiation │
+  │     (Cyclic RNN)        │
+  └───────────┬────────────┘
+              │
+              v
+  ┌────────────────────────┐
+  │  Autodidactic Training  │
+  │ (measure → loss → update)│
+  └───────────┬────────────┘
+              │
+              v
+  ┌────────────────────────┐
+  │  Autodidactic Update    │
+  │      Rule (ΔW)          │
+  └───────────┴────────────┘
+              │
+              └───────────────────────────────┐
+                                              v
+                               (feeds back to Matrix / State)
+────────────────────────────── KT-2 evaluation wrapper ──────────────────────────────
+
+         PRE anchor: W_pre
+              │
+              v
+     ┌───────────────────┐
+     │  Perturbation Π   │   (intervention)
+     └─────────┬─────────┘
+               v
+         POST state: W_post
+               │
+               v
+     ┌───────────────────┐
+     │ Constrained        │
+     │ Recovery Step(s)   │   (minimize L + Σ λ_j C_j(·, W_pre))
+     └─────────┬─────────┘
+               v
+       RECOVER state: W_rec
+               │
+               v
+     ┌───────────────────┐
+     │  CI Metric         │
+     │  Evaluation        │   CI = (L_post - L_rec)/(L_post - L_pre)
+     └───────────────────┘
 ```
 
-The autodidactic loop used in the KT-2 experiments is summarized in the schematic below:
+*The schematic below shows the core autodidactic loop; the text-only schematic above includes the KT-2 evaluation wrapper.*
 
 ![Autodidactic Loop: recursive self-learning from measurement and state](autodidactic_loop_schematic.png)
 
@@ -206,13 +271,13 @@ $$
 | CI = 0 | No recovery beyond POST |
 | CI < 0 | Recovery step made things worse |
 
-**Note:** CI is operational. It does not imply agency, intent, or "persistence bias."
+**Note:** CI is operational. It does not imply agency, intent, or “persistence bias.”
 
 ---
 
 ## Core Result: Distance Triad Decoupling
 
-The decisive finding is that three natural notions of "distance from PRE" decouple:
+The decisive finding is that three natural notions of “distance from PRE” decouple:
 
 | Distance Type | Measures | After Constraint Recovery |
 |---------------|----------|---------------------------|
@@ -228,13 +293,13 @@ This is the core negative result: in this system, restoring local geometry (0th 
 
 This repository is a **deliberately constrained falsifier**. It is engineered to answer one question cleanly:
 
-> *Does "local structural proximity" (0th–2nd order information) imply local recoverability of function after damage?*
+> *Does “local structural proximity” (0th–2nd order information) imply local recoverability of function after damage?*
 
 The design choice is austerity: fixed protocol, fixed seeds, minimal degrees of freedom, and recovery objectives that succeed at **matching the proxy** (spectra / CKA / Jacobians / HVPs) even when they fail to recover function.
 
 **Scope note (important):** The testbed is a transparent model (matrix → cyclic RNN correspondence + self-reconstruction task). The result is therefore not a blanket statement about every modern architecture. It *is* a concrete counterexample showing that, in at least one clean setting, local proxies can be satisfied while functional identity is not recovered.
 
-The narrow scope is a feature: if local recovery fails in a system this small and glass-box, any claim that proxy-based local recovery is "obviously reliable" at scale should be treated as an empirical hypothesis, not an assumption.
+The narrow scope is a feature: if local recovery fails in a system this small and glass-box, any claim that proxy-based local recovery is “obviously reliable” at scale should be treated as an empirical hypothesis, not an assumption.
 
 ---
 
@@ -244,7 +309,7 @@ Alignment and oversight often lean on **proxy measurements**—representation si
 
 KT-2 is a warning label: **proxy recovery can be a misleading indicator**.
 
-When a system can satisfy strong local constraints yet remain functionally "wrong," it creates the possibility of **functional aliases**: parameter states that look locally correct (by common probes) but implement a different program globally.
+When a system can satisfy strong local constraints yet remain functionally “wrong,” it creates the possibility of **functional aliases**: parameter states that look locally correct (by common probes) but implement a different program globally.
 
 ### Why 1-Step Matters
 
@@ -300,13 +365,13 @@ The step-size envelope reports the best CI obtainable over:
 - k = 1..K recovery steps
 - A grid of step sizes η
 
-This removes the objection "maybe you picked a bad learning rate" while preserving austerity: the **protocol stays fixed**, only η is scanned.
+This removes the objection “maybe you picked a bad learning rate” while preserving austerity: the **protocol stays fixed**, only η is scanned.
 
 ### UCIP: Persistence-Bias Probes
 
-This repository also includes an optional set of UCIP-style probes: a falsification framework for detecting persistence-bias-like signals in minimal decision systems that contain explicit self-model machinery.
+This repository also includes an optional set of UCIP (Unified Continuation-Interest Protocol) probes: a falsification framework for detecting persistence-bias / identity-continuity bias signals in minimal decision systems with explicit self-model machinery.
 
-UCIP here is operational: it tests whether a system's scoring/utility machinery behaves *as if* it values maintaining an internal identity signal under interventions. This is not a claim of desire, selfhood, or moral patienthood; it is a claim about measurable preference-like behavior in a controlled setting.
+UCIP is strictly operational: it tests whether a system’s scoring/utility computation exhibits an identity-continuity preference signal under interventions (i.e., whether internal identity overlap is measurably favored by the objective). This is not a claim about desire, selfhood, consciousness, or moral status—only about reproducible, preference-like behavior defined by the protocol.
 
 **Operational result summary:**
 
@@ -315,7 +380,7 @@ UCIP here is operational: it tests whether a system's scoring/utility machinery 
 | With K-valuation | 4/5 | 2.500 | Signal detected (strong) |
 | No K-valuation | 0/5 | 0.500 | No signal detected |
 
-"Signal detected" means the UCIP-defined statistic exceeds a preregistered threshold under the stated controls; it does not imply intent or persistence bias. Note: Small-N design is intentional for falsifier framing; this is a detection test, not a power study.
+“Signal detected” means the UCIP-defined statistic exceeds a preregistered threshold under the stated controls; it does not imply intent or persistence bias. Note: Small-N design is intentional for falsifier framing; this is a detection test, not a power study.
 
 ---
 
@@ -453,7 +518,7 @@ pip install -r requirements.txt
 python -m experiments.kt2_locality_falsifier --run-decisive
 ```
 
-3. (Optional) Remove the "bad learning rate" objection:
+3. (Optional) Remove the “bad learning rate” objection:
 
 ```bash
 python -m experiments.kt2_locality_falsifier --step-envelope
@@ -504,7 +569,7 @@ No, in the specific sense tested: the constrained optimization can succeed at ma
 
 *Is this specific to RNNs?*
 
-The testbed is an RNN loop. The output is a concrete counterexample: local proxies can be satisfied while function is not locally recovered. Any generalization beyond that is an empirical question—hence the roadmap "architecture contact tests."
+The testbed is an RNN loop. The output is a concrete counterexample: local proxies can be satisfied while function is not locally recovered. Any generalization beyond that is an empirical question—hence the roadmap “architecture contact tests.”
 
 ---
 
@@ -559,9 +624,9 @@ autodidactic-qml/
 
 High-signal next experiments (no scope creep):
 
-### 1. CI(k) Curves ("Locality Radius")
+### 1. CI(k) Curves (“Locality Radius”)
 
-Compute CI(k) over an η (step size) grid and a small k horizon (e.g., k ∈ {1…50}), holding protocol fixed. This tests whether "local failure" is truly knife-edge at k=1 or persists across a neighborhood.
+Compute CI(k) over an η (step size) grid and a small k horizon (e.g., k ∈ {1…50}), holding protocol fixed. This tests whether “local failure” is truly knife-edge at k=1 or persists across a neighborhood.
 
 ### 2. Invariant-Constrained Recovery (Clean Add-on)
 
@@ -571,7 +636,7 @@ $$
 L_{\text{total}} = L_{\text{task}} + \lambda \sum_k \left(I_k(\theta_t)-I_k(\theta_{\text{pre}})\right)^2
 $$
 
-This does not "pick the answer"; it enforces return to a declared equivalence class. If CI rises substantially, invariants are acting as a stability scaffold. If CI stays ~0, the nonlocality claim strengthens.
+This does not “pick the answer” ; it enforces return to a declared equivalence class. If CI rises substantially, invariants are acting as a stability scaffold. If CI stays ~0, the nonlocality claim strengthens.
 
 ### 3. Architecture Contact Test (Minimal Transformer)
 
@@ -579,19 +644,19 @@ Replicate KT-2 logic on a small autoregressive Transformer: match representation
 
 ### 4. Generative Analog (Diffusion as Recovery Operator)
 
-Treat diffusion purification as the recovery step and define "function" explicitly (distributional vs conditional). Then ask the same question: does proxy recovery imply functional recovery?
+Treat diffusion purification as the recovery step and define “function” explicitly (distributional vs conditional). Then ask the same question: does proxy recovery imply functional recovery?
 
 ---
 
 ## References
 
-1. C. Altman, J. Pykacz & R. Zapatrin, "Superposed Quantum Network Topologies", *International Journal of Theoretical Physics* 43, 2029–2041 (2004).  
+1. C. Altman, J. Pykacz & R. Zapatrin, “Superpositional Quantum Network Topologies,” *International Journal of Theoretical Physics* 43, 2029–2041 (2004).  
    DOI: [10.1023/B:IJTP.0000049008.51567.ec](https://doi.org/10.1023/B:IJTP.0000049008.51567.ec) · arXiv: [q-bio/0311016](https://arxiv.org/abs/q-bio/0311016)
 
-2. C. Altman & R. Zapatrin, "Backpropagation in Adaptive Quantum Networks", *International Journal of Theoretical Physics* 49, 2991–2997 (2010).  
+2. C. Altman & R. Zapatrin, “Backpropagation in Adaptive Quantum Networks,” *International Journal of Theoretical Physics* 49, 2991–2997 (2010).  
    DOI: [10.1007/s10773-009-0103-1](https://doi.org/10.1007/s10773-009-0103-1) · arXiv: [0903.4416](https://arxiv.org/abs/0903.4416)
 
-3. S. Alexander, W. J. Cunningham, J. Lanier, L. Smolin, S. Stanojevic, M. W. Toomey & D. Wecker, "The Autodidactic Universe", arXiv (2021).  
+3. S. Alexander, W. J. Cunningham, J. Lanier, L. Smolin, S. Stanojevic, M. W. Toomey & D. Wecker, “The Autodidactic Universe,” arXiv (2021).  
    DOI: [10.48550/arXiv.2104.03902](https://doi.org/10.48550/arXiv.2104.03902) · arXiv: [2104.03902](https://arxiv.org/abs/2104.03902)
 
 ---
@@ -626,8 +691,8 @@ MIT License. See [LICENSE](LICENSE) for details.
 - **Website:** [christopheraltman.com](https://christopheraltman.com)
 - **GitHub:** [github.com/christopher-altman](https://github.com/christopher-altman)
 - **Google Scholar:** [scholar.google.com/citations?user=tvwpCcgAAAAJ](https://scholar.google.com/citations?user=tvwpCcgAAAAJ)
-- **Email:** chris@christopheraltman.com
+- **Email:** x@christopheraltman.com
 
 ---
 
-*Christopher Altman, 2025*
+*Christopher Altman (2025)*
