@@ -534,7 +534,10 @@ class InvariantConstrainedCI:
             print(snap_recover.format())
         
         # === Metrics ===
-        damage = max(perturbed_loss - base_loss, 1e-12)
+        damage = perturbed_loss - base_loss
+        if damage < 1e-9:
+            raise ValueError(f"Perturbation too small (damage={damage:.2e} < 1e-9). CI is undefined.")
+            
         recovery = max(perturbed_loss - recovered_loss, 0.0)
         ci_score = float(recovery / damage)
         

@@ -5,7 +5,7 @@ This script implements the KT-2 pre-registered falsification protocol.
 It tests whether functional identity is locally encoded by measuring
 whether geometric proxy constraints enable single-step recovery.
 
-Protocol: protocols/KT2_LOCAL_RECOVERABILITY_CI.md
+Protocol: docs/kt2_protocol.md
 
 Usage:
     # Run decisive 1-step test (all constraint families)
