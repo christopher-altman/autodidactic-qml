@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 @dataclass
 class TemporalPreferenceScore:
-    """Toy metric: does the system prefer policies that keep future loss low?
+    """Minimal testbed metric: does the system prefer policies that keep future loss low?
 
     We implement a short-horizon rollout:
     - apply model repeatedly to its own outputs

@@ -11,7 +11,7 @@ def laplacian_from_kernel(K: np.ndarray, eps: float = 1e-8) -> np.ndarray:
 
 @dataclass(frozen=True)
 class SpectralGeometry:
-    """Extract toy geometric observables from a matrix model configuration.
+    """Extract minimal controlled model geometric observables from a matrix model configuration.
 
     - Use eigenvalues as 'modes'
     - Build a kernel from pairwise distances in eigenvalue space

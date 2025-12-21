@@ -1,7 +1,7 @@
 """
 UCIP detection - operational proxies for continuation-interest metrics.
 
-This module provides tools for detecting self-preservation-like behaviors:
+This module provides tools for detecting persistence-bias-like signals:
 - ContinuationInterestMetric: Recovery from perturbations as CI proxy
 - InvariantConstrainedCI: Enhanced CI with invariant-constrained recovery
 - TemporalPreferenceScore: Short-horizon rollout preference metric

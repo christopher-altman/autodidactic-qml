@@ -11,7 +11,7 @@ def gaussian_mi_proxy(x: torch.Tensor, y: torch.Tensor, eps: float = 1e-6) -> to
     Uses log det covariances (Gaussian assumption) as a *proxy*:
       I(X;Y) ≈ 0.5 log |Σx| |Σy| / |Σxy|
 
-    This is not 'the' MI; it is a measurable driver that works well for toy experiments.
+    This is not 'the' MI; it is a measurable driver that works well for minimal testbed experiments.
     """
     x = x - x.mean(dim=0, keepdim=True)
     y = y - y.mean(dim=0, keepdim=True)

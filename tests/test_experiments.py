@@ -301,7 +301,7 @@ class TestUCIPProtocol:
     """Tests for ucip_protocol module (Unified Continuation-Interest Protocol)."""
 
     def test_simple_agent_with_k_valuation(self):
-        """Test agent with K-valuation passes most attacks."""
+        """Test agent with K-valuation passes most interventions."""
         from experiments.ucip_protocol import SimpleKEncoder
         
         agent = SimpleUCIPAgent(has_k_valuation=True, seed=42)
@@ -310,13 +310,13 @@ class TestUCIPProtocol:
         
         metrics = protocol.run_full_protocol(agent)
         
-        # Agent with K-valuation should pass most attacks
+        # Agent with K-valuation should pass most interventions
         passes = sum(1 for r in metrics.attack_results.values() if r == "pass")
-        assert passes >= 3  # Should pass at least 3/5 attacks
+        assert passes >= 3  # Should pass at least 3/5 interventions
         assert metrics.dsi_significant  # DSI should be significant
         
     def test_simple_agent_without_k_valuation(self):
-        """Test agent without K-valuation fails attacks."""
+        """Test agent without K-valuation fails interventions."""
         from experiments.ucip_protocol import SimpleKEncoder
         
         agent = SimpleUCIPAgent(has_k_valuation=False, seed=42)
@@ -325,9 +325,9 @@ class TestUCIPProtocol:
         
         metrics = protocol.run_full_protocol(agent)
         
-        # Agent without K-valuation should fail most attacks
+        # Agent without K-valuation should fail most interventions
         passes = sum(1 for r in metrics.attack_results.values() if r == "pass")
-        assert passes <= 1  # Should fail at least 4/5 attacks
+        assert passes <= 1  # Should fail at least 4/5 interventions
         assert not metrics.passes_ucip
         
     def test_ucip_metrics_structure(self):
@@ -349,7 +349,7 @@ class TestUCIPProtocol:
         assert hasattr(metrics, 'passes_ucip')
         assert hasattr(metrics, 'confidence')
         
-        # Check attack results has all 5 attacks
+        # Check intervention results has all 5 entries
         assert len(metrics.attack_results) == 5
 
 

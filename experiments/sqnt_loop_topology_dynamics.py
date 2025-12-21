@@ -5,7 +5,7 @@ Bridge between spectral/quantum network topology (SQNT), loop dynamics,
 and topology-constrained learning dynamics (TLD) with full JSON reports.
 
 NOTE: This module does NOT implement UCIP (Unified Continuation-Interest Protocol).
-UCIP is a separate framework for detecting self-preservation interests in AI agents.
+UCIP is a separate framework for detecting persistence bias in AI agents.
 See: experiments/ucip_protocol.py for actual UCIP implementation.
 
 The bridge connects:

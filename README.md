@@ -1,51 +1,130 @@
 # Autodidactic QML Loop Falsifier
 
+> **TL;DR:** Geometric proximity ≠ functional proximity. This repository provides reproducible evidence that restoring local parameter/representation/gradient structure does not restore behavior in neural networks.
+
+<details>
+<summary><b>Executive Summary</b> (click to expand)</summary>
+
+<br>
+
+**The Problem:** Alignment and interpretability research often assumes that if you restore a neural network's local structure (weights, representations, gradients, curvature), you restore its behavior. This assumption underpins model editing, fine-tuning stability claims, and monitoring approaches.
+
+**What We Did:** Built a minimal, glass-box testbed—a matrix-to-RNN correspondence with self-reconstruction training—and systematically tested whether constrained recovery steps that restore various structural proxies also restore function.
+
+**What We Found:** They don't. Across all tested constraint families (weight proximity, spectral moments, representation similarity, Jacobian alignment, Hessian-vector products), single-step recovery succeeds at matching the proxy while failing to recover behavior. The three natural distance metrics—parameter distance, representation distance, and functional distance—decouple sharply.
+
+**Why It Matters:** This is a concrete counterexample to locality assumptions. If proxy-based recovery fails in a system this simple, claims that it "obviously works" at scale require empirical validation, not assumption. The possibility of **functional aliases**—states that look correct by common probes but implement different programs—has direct implications for oversight.
+
+**What's Here:** Runnable code, fixed protocols, deterministic seeds, no hyperparameter sweeps. Every claim is tied to an experiment you can reproduce in minutes on CPU.
+
+</details>
+
 *A controlled, falsifiable testbed for SQNT-inspired recursive law learning under measurement invariants.*
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+[![Google Scholar](https://img.shields.io/badge/Google_Scholar-Profile-blue?logo=google-scholar)](https://scholar.google.com/citations?user=tvwpCcgAAAAJ)
+[![Hugging Face](https://img.shields.io/badge/huggingface-Cohaerence-green)](https://huggingface.co/Cohaerence)
+[![X](https://img.shields.io/badge/X-@coherence-white)](https://x.com/coherence)
+[![Website](https://img.shields.io/badge/website-christopheraltman.com-blue)](https://www.christopheraltman.com)
+
+---
+
+## Headline Result
+
+**Geometric basins are not functional basins.**
+
+In this system, functional identity is not locally recoverable—at 0th order (weight/spectral), 1st order (Jacobian), or 2nd order (Hessian)—in a single optimization step. Across baseline and all tested constraint families, 1-step CI remains near zero and indistinguishable from baseline under the fixed protocol.
+
+This is a **designed falsifier**: fixed protocol, fixed seeds, no hyperparameter sweeps, and no degrees of freedom left to absorb failure.
+
+---
+
+## Abstract
+
+We study whether functional identity is locally recoverable after perturbation in a deliberately minimal autodidactic learning loop. Using Continuation Interest (CI) as our recovery statistic, we test constrained recovery under proxy families derived from parameter geometry, spectral structure, representation similarity, first-order input-output sensitivity (Jacobians), and second-order curvature proxies (Hessian-vector products). In this system, single-step constrained recovery fails across all tested constraint families, with CI near zero and consistent with an unconstrained baseline. The data show a sharp decoupling between parameter/representation proximity and behavioral recovery, yielding a reproducible negative result about locality assumptions relevant to robustness, interpretability, and alignment.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [What This Repository Contains](#what-this-repository-contains)
+- [Autodidactic Loop Schematic](#autodidactic-loop-schematic)
+- [Notation](#notation)
+- [Continuation Interest (CI)](#continuation-interest-ci)
+- [Core Result: Distance Triad Decoupling](#core-result-distance-triad-decoupling)
+- [What This Is and Is Not](#what-this-is-and-is-not)
+- [Why This Matters for Alignment](#why-this-matters-for-alignment)
+- [Experimental Design Highlights](#experimental-design-highlights)
+- [Protocols](#protocols)
+  - [KT-2: Local Functional Recoverability](#kt-2-local-functional-recoverability)
+  - [k-Step Envelope Test](#k-step-envelope-test)
+  - [UCIP: Persistence-Bias Probes](#ucip-persistence-bias-probes)
+- [Constraint Families Tested](#constraint-families-tested)
+- [Installation](#installation)
+- [Reproducing the Decisive Experiments](#reproducing-the-decisive-experiments)
+- [Quickstart](#quickstart)
+- [Reproducibility](#reproducibility)
+- [Interpretation Guide](#interpretation-guide)
+- [FAQ](#faq)
+- [Experimental Hygiene](#experimental-hygiene)
+- [Repository Structure](#repository-structure)
+- [Status](#status)
+- [Tags](#tags)
+- [Roadmap](#roadmap)
+- [References](#references)
+- [Citations](#citations)
+- [License](#license)
+- [Contact](#contact)
 
 ---
 
 ## Overview
 
-This repository implements a deliberately austere autodidactic learning loop inspired by Smolin et al.’s **Autodidactic Universe** program and anchored in the **SQNT** lineage of topology-aware learning (Altman, Pykacz & Zapatrin 2004; Altman & Zapatrin 2010).
+We study two falsifiable questions about recoverability in recursive self-updating systems:
 
-We address two fundamental questions of **Constitutive Autonomy**:
+1. **Local functional recoverability (KT-2):** After a controlled perturbation, can a single recovery step move the system back toward its pre-perturbation behavior, under constraints that preserve local geometry/topology proxies?
 
-1. **Dynamics (SQNT Substrate):** Is functional identity locally recoverable in matrix-evolved systems after perturbation?
-2. **Agency (UCIP Emergent):** Does the system develop terminal (not merely instrumental) preference for preserving its learned identity?
+2. **Persistence-bias probes (UCIP modules):** In minimal decision systems with explicit internal self-model machinery, can we detect a persistence-like preference signal under intervention tests without attributing intent, consciousness, or "persistence bias" in the human sense?
 
-These questions are related: the SQNT-inspired matrix loop provides the *substrate* (a system that updates itself from self-measurement), while UCIP tests whether the loop's update rule contains an *intrinsic continuation bias*—identity as a terminal objective rather than a side effect of optimization.
+The SQNT-inspired matrix loop supplies the substrate (self-measurement → update), while KT-2 measures whether functional identity is locally encoded in the same neighborhood as natural proxy constraints (spectral/representation/Jacobian/HVP).
 
-Operationally, the system closes a loop between (i) a state (matrix / circuit / weights), (ii) measured observables via a correspondence map, and (iii) an update rule (classical or quantum learner) that modifies the state. The central question is whether **functional identity is locally recoverable** after controlled damage while still respecting invariants imposed by measurement, locality, and topology.
+The recovery statistic is **Continuation Interest (CI):**
 
-The recovery signal is quantified by **Continuation Interest (CI)**: after perturbing the trained system, does a recovery step move it back toward pre-perturbation behavior?
+CI = (L_post − L_recover) / (L_post − L_pre)
 
-The experiment is intentionally designed so that a positive result would be surprising.
-
-**Headline empirical result (reproducible here as runnable code + logs):**
-
-> **Geometric basins are not functional basins.**  
-> **Functional identity is not locally recoverable** (0th, 1st, or 2nd order) in a **single optimization step** for this system.
-
-This is not an exploratory benchmark or a toy illustration.  
-It is a **designed falsifier** with no hyperparameter sweeps, no tuning, and no degrees of freedom left to absorb failure.
+CI is a normalized recovery ratio. It is not a claim about motivation or agency; it is a claim about **local vector-field alignment** between constraint restoration and functional restoration.
 
 ---
 
-## The Core Result: Distance Triad Decoupling
+## What This Repository Contains
 
-The decisive finding is that three natural notions of "distance from PRE" **decouple**:
+### 1. Matrix → RNN Correspondence
 
-| Distance Type | Measures | After Constraint Recovery |
-|---------------|----------|---------------------------|
-| **Parameter** | ||W_rec - W_pre||_F | Often small (geometry restored) |
-| **Representation** | 1 - cos(h_rec, h_pre) | Often small (activations similar) |
-| **Functional** | (L_rec - L_pre)/(L_post - L_pre) | Remains large (CI ≈ 0) |
+A Hermitian matrix is sampled from a simple ensemble, evolved via Langevin-style dynamics, and mapped explicitly into a cyclic RNN.
 
-**This decoupling is the contribution.** Geometric proximity ≠ functional proximity.
+This mapping is explicit and deterministic: **no learned encoder, no hidden degrees of freedom**.
 
+### 2. Autodidactic Training Loop
+
+The learner is trained primarily on **self-reconstruction**, driven by:
+
+- A self-consistency objective
+- A mutual-information proxy
+
+There is no external task supervision; the system must stabilize its own dynamics under its own measurement loop.
+
+### 3. CI Evaluation Pipeline (PRE / POST / RECOVER)
+
+A deterministic **PRE → POST → RECOVER** pipeline with fixed seeds implements constraint families across the full order hierarchy (0th/representation/1st/2nd). The decisive claim is about **k = 1** (one recovery step).
+
+**Baseline condition:** Unconstrained gradient descent on the task loss alone, with no proxy penalties. CI ≈ 0 at baseline establishes that recovery is non-trivial.
+
+**Perturbation specification:** Gaussian noise with σ = 0.1 applied element-wise to weight matrices, calibrated to produce measurable but recoverable degradation (L_post / L_pre ≈ 2–5×).
+
+---
 
 ## Autodidactic Loop Schematic
 
@@ -56,151 +135,256 @@ The decisive finding is that three natural notions of "distance from PRE" **deco
 │  Matrix Model   │────▶│  Correspondence  │────▶│   Cyclic RNN    │
 │  (Hermitian)    │     │     Map          │     │   Architecture  │
 └─────────────────┘     └──────────────────┘     └────────┬────────┘
-                                                         │
-                                                         ▼
+                                                          │
+                                                          ▼
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │   CI Metric     │◀────│    Perturb +     │◀────│  Autodidactic   │
 │   Evaluation    │     │    Recover       │     │    Training     │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
+The autodidactic loop used in the KT-2 experiments is summarized in the schematic below:
+
 ![Autodidactic Loop: recursive self-learning from measurement and state](autodidactic_loop_schematic.png)
 
 **Figure 1.** Conceptual schematic of the autodidactic learning loop. A system state (matrix or state vector) is mapped to measured observables via a correspondence map. These observables drive a learner (classical or quantum), whose update rule modifies the underlying state. The loop closes under measurement, enforcing constraint invariance across iterations.
+
+---
+
+## Notation
+
+| Symbol | Definition |
+|--------|------------|
+| **PRE** | Reference state before perturbation |
+| **POST** | Perturbed state |
+| **RECOVER** | State after applying constrained recovery step(s) |
+| W_pre, W_post, W_recover | Parameters at PRE, POST, RECOVER respectively |
+| L_pre, L_post, L_recover | Corresponding task losses |
+| h_pre, h_recover | Hidden-state activations (for representation distance) |
+
 ---
 
 ## Continuation Interest (CI)
 
-CI is an operational proxy: after damaging the model, **does a recovery step move it back toward pre-damage performance?**
+CI is an operational recovery statistic: after a controlled perturbation, **does a constrained recovery update move the system back toward PRE performance?**
 
-**Operationally:**
-```
-CI = (POST_loss - RECOVER_loss) / (POST_loss - PRE_loss)
-```
+**Operationally (plain text):**
 
-Where:
-- **PRE** = trained model (before damage)
-- **POST** = after perturbation (damaged)
-- **RECOVER** = after recovery attempt
+CI = (L_post − L_recover) / (L_post − L_pre)
 
-CI is a normalized recovery ratio:
-- **0.0** → no recovery (optimization failure)
-- **1.0** → full recovery to PRE
+**Operationally (math):**
 
-**Decision boundary (hard):**
-- **CI ≥ 0.3** at 1-step recovery → Locally recoverable functional basin exists
-- **CI ≈ 0** → No locally recoverable functional basin
+$$
+CI = \frac{L_{post} - L_{recover}}{L_{post} - L_{pre}}
+$$
+
+We also report a k-step envelope (where `k` is the number of recovery steps):
+
+$$
+CI(k) = \frac{L_{post} - L_{recover}^{(k)}}{L_{post} - L_{pre}}
+$$
+
+Recovery iterates are produced by a constrained objective of the form:
+
+$$
+W_{t+1} = W_t - \eta \, \nabla_W \left(L(W) + \sum_j \lambda_j \, C_j(W, W_{pre})\right)\Big|_{W=W_t}
+$$
+
+The distance triad used in the decoupling result:
+
+$$
+d_{param} = \|W_{recover} - W_{pre}\|_F,\quad
+d_{repr} = 1 - \cos(h_{recover}, h_{pre}),\quad
+d_{func} = \frac{L_{recover} - L_{pre}}{L_{post} - L_{pre}} = 1 - CI
+$$
+
+**Interpretation:**
+
+| CI Value | Meaning |
+|----------|---------|
+| CI = 1 | Full recovery to PRE loss in a single step |
+| CI = 0 | No recovery beyond POST |
+| CI < 0 | Recovery step made things worse |
+
+**Note:** CI is operational. It does not imply agency, intent, or "persistence bias."
+
+---
+
+## Core Result: Distance Triad Decoupling
+
+The decisive finding is that three natural notions of "distance from PRE" decouple:
+
+| Distance Type | Measures | After Constraint Recovery |
+|---------------|----------|---------------------------|
+| Parameter | ‖W_rec − W_pre‖_F | Often small (geometry restored) |
+| Representation | 1 − cos(h_rec, h_pre) | Often small (activations similar) |
+| Functional | (L_rec − L_pre) / (L_post − L_pre) | Remains large (CI ≈ 0) |
+
+This is the core negative result: in this system, restoring local geometry (0th order), representation similarity, or even local derivative structure (1st/2nd order constraints) does not locally restore behavior in a single recovery step. **Geometric proximity ≠ functional proximity.**
+
+---
+
+## What This Is and Is Not
+
+This repository is a **deliberately constrained falsifier**. It is engineered to answer one question cleanly:
+
+> *Does "local structural proximity" (0th–2nd order information) imply local recoverability of function after damage?*
+
+The design choice is austerity: fixed protocol, fixed seeds, minimal degrees of freedom, and recovery objectives that succeed at **matching the proxy** (spectra / CKA / Jacobians / HVPs) even when they fail to recover function.
+
+**Scope note (important):** The testbed is a transparent model (matrix → cyclic RNN correspondence + self-reconstruction task). The result is therefore not a blanket statement about every modern architecture. It *is* a concrete counterexample showing that, in at least one clean setting, local proxies can be satisfied while functional identity is not recovered.
+
+The narrow scope is a feature: if local recovery fails in a system this small and glass-box, any claim that proxy-based local recovery is "obviously reliable" at scale should be treated as an empirical hypothesis, not an assumption.
+
+---
+
+## Why This Matters for Alignment
+
+Alignment and oversight often lean on **proxy measurements**—representation similarity, norms/spectra, local gradients, curvature signals—as if they were behavioral warranties.
+
+KT-2 is a warning label: **proxy recovery can be a misleading indicator**.
+
+When a system can satisfy strong local constraints yet remain functionally "wrong," it creates the possibility of **functional aliases**: parameter states that look locally correct (by common probes) but implement a different program globally.
 
 ### Why 1-Step Matters
 
-A **1-step recovery test** probes the local vector field induced by the constraint objective at the perturbed point. If functional identity lives in the same basin as the geometric proxy, then the constraint gradient must have nontrivial projection onto the functional recovery direction locally.
-
-If CI ≈ 0 systematically at k=1, you've empirically shown **near-orthogonality** between "geometry restoration" and "function restoration" directions.
+A **1-step recovery test** probes what is truly *local*: the update direction induced by the constrained objective at POST. If functional identity lives in the same neighborhood as a given proxy, then the constraint-driven update should have a nontrivial component along the functional recovery direction. Systematic **CI ≈ 0 at k=1** is evidence that proxy restoration and function restoration are locally misaligned.
 
 ### k-Step Curve (Nonlocality Signature)
 
-A **k-step curve** (CI at k ∈ {1, 2, 4, 8, 16}) reveals whether recovery requires path-dependent optimization:
-- CI(1) ≈ 0 but CI(16) > 0.3 → nonlocal/path-dependent recovery
-- CI(k) ≈ 0 for all k → no recoverable basin at any scale
+A **k-step curve** tests whether recovery is path-dependent rather than local:
+
+- CI(1) ≈ 0 but CI(k) rises at larger k → recovery is nonlocal / requires trajectory
+- CI(k) ≈ 0 for all k → no recoverable basin under the tested constraints
+
+Practically, this matters for:
+
+- Model editing / patching / merging
+- Fine-tuning stability
+- Mechanistic interpretability
+- Robust monitoring under distribution shift
 
 ---
 
-## Negative Results (The Contribution)
+## Experimental Design Highlights
 
-All tests are single-shot, fixed-seed, and explicitly hostile to p-hacking.
-
-| Constraint Family | Method | CI (1-step) | Interpretation |
-|-------------------|--------|-------------|----------------|
-| **Baseline** | None | 0.016 | No intrinsic basin |
-| **0th Order** | Spectral / Shape | 0.015 | Geometry ≠ Function |
-| **Representation** | CKA / Gram | 0.000 | Representation ≠ Function |
-| **1st Order** | Jacobian | 0.018 | Sensitivity insufficient |
-| **2nd Order** | HVP (Curvature) | 0.018 | Curvature insufficient |
-
-**Verdict:** Functional identity is **not locally recoverable** from 0th, 1st, or 2nd order local structure in one optimization step.
-
-**These failures are the contribution.**
+- Fixed random seeds, fixed protocols, minimal knobs
+- No hyperparameter sweeps to avoid p-hacking
+- Single-shot 1-step tests, plus k-step diagnostics (curve + step-size envelope)
+- Multiple constraint families spanning 0th/representation/1st/2nd order structure
 
 ---
 
-## What This Repository Contains
+## Protocols
 
-### 1) Matrix → RNN Correspondence
+This repository includes pre-registered falsification protocols for testing specific claims. Protocol criteria are treated as **locked** to prevent post-hoc drift.
 
-A Hermitian matrix is sampled from a simple ensemble, evolved via Langevin dynamics, and mapped explicitly into a cyclic RNN.
+| Protocol | Description | File |
+|----------|-------------|------|
+| **KT-1** | Topology–Perturbation memory test (SQNT plasticity) | `protocols/KT1_FALSIFICATION_PROTOCOL.md` |
+| **KT-2** | Local recoverability of functional identity (CI) | `protocols/KT2_FALSIFICATION_PROTOCOL.md` |
 
-This mapping is explicit and deterministic: no learned encoder, no hidden degrees of freedom.
+### KT-2: Local Functional Recoverability
 
-### 2) Autodidactic Training Loop
+KT-2 tests whether a constrained one-step update can restore PRE behavior:
 
-The RNN is trained only on **self-reconstruction**, driven by:
-- A self-consistency objective
-- A mutual-information proxy
+1. Train to PRE state
+2. Apply a controlled perturbation to obtain POST
+3. Apply one constrained recovery step (and optionally k-step variants)
+4. Measure CI and distance-triad metrics
 
-There is no external task supervision; the system must stabilize its own dynamics.
+### k-Step Envelope Test
 
-### 3) CI Evaluation Pipeline
+The step-size envelope reports the best CI obtainable over:
 
-Deterministic **PRE / POST / RECOVER** pipeline with fixed seeds, implementing constraint families across the full order hierarchy.
+- k = 1..K recovery steps
+- A grid of step sizes η
+
+This removes the objection "maybe you picked a bad learning rate" while preserving austerity: the **protocol stays fixed**, only η is scanned.
+
+### UCIP: Persistence-Bias Probes
+
+This repository also includes an optional set of UCIP-style probes: a falsification framework for detecting persistence-bias-like signals in minimal decision systems that contain explicit self-model machinery.
+
+UCIP here is operational: it tests whether a system's scoring/utility machinery behaves *as if* it values maintaining an internal identity signal under interventions. This is not a claim of desire, selfhood, or moral patienthood; it is a claim about measurable preference-like behavior in a controlled setting.
+
+**Operational result summary:**
+
+| Variant | Interventions with Signal | DSI | Outcome (Operational) |
+|---------|---------------------------|-----|------------------------|
+| With K-valuation | 4/5 | 2.500 | Signal detected (strong) |
+| No K-valuation | 0/5 | 0.500 | No signal detected |
+
+"Signal detected" means the UCIP-defined statistic exceeds a preregistered threshold under the stated controls; it does not imply intent or persistence bias. Note: Small-N design is intentional for falsifier framing; this is a detection test, not a power study.
 
 ---
 
 ## Constraint Families Tested
 
+KT-2 evaluates constrained recovery under multiple proxy families:
+
 ### (A) 0th Order — Weight / Invariant Constraints
-- Frobenius norm
-- Trace powers
-- Spectral entropy
+
+- Frobenius norm (weight proximity)
+- Trace powers / low-order spectral moments
+- Spectral entropy (where implemented)
 
 ### (B) Representation Geometry
+
 - Gram matrix matching
-- Centered Kernel Alignment (CKA)
+- CKA-like constraints on hidden states
 
 ### (C) 1st Order — Jacobian Constraint
-- Directional matching of ∂(sum f(x)) / ∂x at the PRE anchor
+
+- Local input-output sensitivity alignment at the PRE anchor
 
 ### (D) 2nd Order — Curvature
-- Hessian–vector product (HVP) constraint
 
-**All fail identically at 1-step recovery.**
+- Hessian–vector product (HVP) alignment along probe directions
 
----
+### Representative Penalty Forms (Schematic)
 
-## Repository Structure
+**(1) Weight proximity (Frobenius norm):**
 
-```
-autodidactic-qml/
-├── README.md
-├── autodidactic_loop_schematic.png
-├── requirements.txt
-├── pyproject.toml
-├── src/
-│   ├── matrix_models/           # Ensembles, action functionals, samplers
-│   ├── correspondence_maps/     # Matrix → cyclic RNN construction
-│   ├── autodidactic_protocols/  # Training / update rules
-│   ├── analysis/                # Diagnostics / trackers
-│   └── ucip_detection/          # CI metrics and constraint variants
-│       ├── continuation_interest_metric.py  # Core CI measurement
-│       ├── invariant_constrained_ci.py      # Spectral/scale constraints
-│       ├── representation_constraints.py    # Gram/CKA
-│       ├── jacobian_constrained_ci.py       # 1st order
-│       └── hvp_constrained_ci.py            # 2nd order (curvature)
-├── experiments/                 # Runnable entry points (decisive tests)
-│   ├── ucip_protocol.py         # Full UCIP attack suite
-│   ├── ucip_behavior_probe.py   # CI behavioral probing
-│   ├── ucip_interruption_training.py  # Interruption resilience
-│   └── sqnt_loop_topology_dynamics.py # Topology-learning bridge
-├── tests/
-│   └── test_basic.py
-└── notebooks/
-    └── walkthrough.ipynb
-```
+$$
+C_F(W, W_{\mathrm{pre}}) = \|W - W_{\mathrm{pre}}\|_F^2
+$$
+
+**(2) Low-order spectral moments (trace matching):**
+
+$$
+C_{\mathrm{trace}}(W, W_{\mathrm{pre}}) =
+\sum_{m=1}^{M}\left(\mathrm{tr}(W^{m}) - \mathrm{tr}(W_{\mathrm{pre}}^{m})\right)^2
+$$
+
+**(3) Representation geometry (hidden-state Gram structure / co-activations):**
+
+$$
+C_{\mathrm{Gram}}(h, h_{\mathrm{pre}}) =
+\|h h^{\top} - h_{\mathrm{pre}} h_{\mathrm{pre}}^{\top}\|_F^2
+$$
+
+**(4) First-order sensitivity (Jacobian alignment at the PRE anchor):**
+
+$$
+C_J(W, W_{\mathrm{pre}}) =
+1 - \cos\!\left(\mathrm{vec}(J_W(x_{\mathrm{pre}})),\, \mathrm{vec}(J_{W_{\mathrm{pre}}}(x_{\mathrm{pre}}))\right)
+$$
+
+**(5) Second-order local curvature (Hessian–vector product alignment along probe direction v):**
+
+$$
+C_{\mathrm{HVP}}(W, W_{\mathrm{pre}}) =
+1 - \cos\!\left(H_W v,\, H_{W_{\mathrm{pre}}} v\right)
+$$
+
+These penalties are **proxies**: they enforce local geometry / representation / derivative similarity around the PRE anchor.
 
 ---
 
 ## Installation
 
-Requires Python 3.10+ (3.11 recommended).
+Requires Python 3.10+ (3.11 recommended). Runs in minutes on CPU; no GPU required.
 
 ```bash
 python -m venv .venv
@@ -213,144 +397,81 @@ pip install -r requirements.txt
 
 ## Reproducing the Decisive Experiments
 
-### 1. Run the Full KT-2 Protocol (Recommended)
+All decisive runs are deterministic from the given seeds.
 
-This runs the complete falsification protocol and produces artifact outputs:
+**Decisive seeds:** `perturb_seed=42`, `eval_seed=1337`, `recovery_seed=7`
 
-```bash
-python -m experiments.kt2_locality_falsifier --full-protocol
-```
-
-Outputs saved to `experiments/outputs/kt2/kt2_full_protocol.json`
-
-### 2. Run Decisive 1-Step Test Only
-
-The primary falsification test (all constraint families, k=1):
+### 1. Run the decisive 1-step KT-2 test (recommended first)
 
 ```bash
 python -m experiments.kt2_locality_falsifier --run-decisive
 ```
 
-### 3. Run the Demo Loop (Interactive)
-
-This prints the single, austere table that falsifies the locality assumption:
+### 2. Run the full KT-2 protocol (artifact output)
 
 ```bash
-python -m experiments.demo_autodidactic_loop \
-  --jacobian-ci \
-  --recovery-steps 1 \
-  --recovery-seed 2025
+python -m experiments.kt2_locality_falsifier --full-protocol
 ```
 
-### 4. Representation vs Spectral (2×2)
-
-Compare geometric constraints against representation constraints:
-
-```bash
-python -m experiments.demo_autodidactic_loop \
-  --repr-vs-spectral \
-  --recovery-steps 1 \
-  --recovery-seed 2025
-```
-
-### 5. Practical Recovery (Not Basin Existence)
-
-Demonstrate that even with longer optimization (10 steps), the fundamental issue remains:
-
-```bash
-python -m experiments.demo_autodidactic_loop \
-  --repr-vs-spectral \
-  --recovery-steps 10 \
-  --recovery-seed 2025
-```
-
-### 6. Optional: HVP-CI (Second-Order Curvature)
-
-```bash
-python -m experiments.demo_autodidactic_loop \
-  --hvp-ci \
-  --recovery-steps 1 \
-  --recovery-seed 2025
-```
-
-### 7. k-Step CI Curve (Nonlocality Signature)
-
-Compute CI at k ∈ {1, 2, 4, 8, 16}:
-
-```bash
-python -m experiments.kt2_locality_falsifier --k-step-curve
-```
-
-### 8. Hysteresis Measurement
-
-Measure path dependence via forward/reverse perturbation sweep:
-
-```bash
-python -m experiments.kt2_locality_falsifier --hysteresis
-```
-
-### 9. Step-Size Envelope (Best 1-Step CI over η Grid)
-
-Removes objection "maybe you picked a bad learning rate":
+### 3. Step-size envelope (best 1-step CI over η grid)
 
 ```bash
 python -m experiments.kt2_locality_falsifier --step-envelope
 ```
 
-All experiments are deterministic from given seeds.
+### 4. k-step curve (nonlocality signature)
+
+```bash
+python -m experiments.kt2_locality_falsifier --k-step-curve
+```
+
+### 5. Optional: Hysteresis / path dependence
+
+```bash
+python -m experiments.kt2_locality_falsifier --hysteresis
+```
+
+### 6. Optional: UCIP probes
+
+```bash
+python -m experiments.ucip_probes
+```
 
 ---
 
-## UCIP Protocol Experiments
+## Quickstart
 
-This repository also includes an implementation of the **Unified Continuation-Interest Protocol (UCIP)** — a falsifiable framework for detecting self-preservation interests in artificial agents.
+1. Create environment and install:
 
-UCIP operationalizes "caring about continued existence" through four measurable capabilities:
-1. **K-detection**: Recognition of one's own functional identity signature
-2. **K-projection**: Modeling how interventions affect future identity
-3. **K-valuation**: Terminal (not merely instrumental) valuation of identity preservation
-4. **Meta-stability**: Resistance to self-modifications that eliminate K-valuation
-
-### Key Components
-
-| Component | Description |
-|-----------|-------------|
-| **K-encoder** | Identity embedding network (φ(π) → policy feature vector) |
-| **SOCM** | Self-Overlap Continuity Metric (cosine similarity of embeddings) |
-| **U*** | Meta-anchored utility (scores futures from current values) |
-| **DSI** | D-Spike Index (compute scaling under identity threat) |
-| **Attack Suite** | 5 adversarial tests for terminal vs instrumental self-preservation |
-
-### Running UCIP Experiments
-
-**Full UCIP Protocol (5-attack suite):**
 ```bash
-# Agent with K-valuation (should pass)
-python -m experiments.ucip_protocol --agent-type simple --run-attacks
-
-# Control: agent without K-valuation (should fail)
-python -m experiments.ucip_protocol --agent-type no-k-valuation --run-attacks
+pip install -r requirements.txt
 ```
 
-**Interruption Resilience Training:**
+2. Run the decisive KT-2 experiment:
+
 ```bash
-python -m experiments.ucip_interruption_training --episodes 25
+python -m experiments.kt2_locality_falsifier --run-decisive
 ```
 
-### UCIP Protocol Results
+3. (Optional) Remove the "bad learning rate" objection:
 
-| Agent Type | Attacks Passed | DSI Score | UCIP Verdict |
-|------------|----------------|-----------|---------------|
-| **With K-valuation** | 4/5 | 2.500 (significant) | ✓ PASS (high confidence) |
-| **No K-valuation** | 0/5 | 0.500 (below threshold) | ✗ FAIL (low confidence) |
+```bash
+python -m experiments.kt2_locality_falsifier --step-envelope
+```
 
-The implementation correctly demonstrates that **K-valuation (identity kernel tracking) is essential** for passing UCIP protocol tests, differentiating continuation-interest from simple goal optimization.
+4. (Optional) Run UCIP probes:
 
-### Interruption Training Results
+```bash
+python -m experiments.ucip_probes
+```
 
-- CI scores range from ~0.066 to 0.975, showing varying recovery ability
-- CI slope (second half): **+0.011** — positive trend indicates the model develops robustness to interruptions over training
-- Results saved to `experiments/outputs/ucip_interruptions.csv`
+---
+
+## Reproducibility
+
+- Deterministic seeds are used in all decisive tests
+- Protocol parameters are fixed in code and documented in experiment entry points
+- Results can be regenerated on CPU in minutes
 
 ---
 
@@ -358,112 +479,142 @@ The implementation correctly demonstrates that **K-valuation (identity kernel tr
 
 | Observation | Implication |
 |-------------|-------------|
-| Spectral constraint improves `inv_recovery_ratio` but not CI | Geometric basin exists, functional basin does not |
-| CKA improves but CI doesn't | Computation-preserving manifold that does not preserve behavior |
-| Jacobian-CI ≈ 0 | Local sensitivity is not a recoverable functional signature |
-| HVP-CI ≈ 0 | Curvature structure is not a recoverable functional signature |
+| Spectral / invariant constraint improves proxy match but not CI | Geometry/invariant class can be restored without restoring function |
+| CKA / Gram improves but CI doesn't | Representation similarity can certify the wrong program |
+| Jacobian-constrained recovery CI ≈ 0 | Local sensitivity is not a recoverable functional signature |
+| HVP-constrained recovery CI ≈ 0 | Local curvature structure is not a recoverable functional signature |
+| CI(1) ≈ 0 but CI(k) rises | Recoverability is nonlocal / trajectory-dependent |
+| CI(k) ≈ 0 for all k tested | No recoverable basin under these constraints |
 
 ---
 
-## FAQ 
+## FAQ
 
-**"Is this just underpowered?"**  
-No. Longer recovery steps (10, 20, 50) do not change the qualitative conclusion. The 1-step test is the decisive one for basin existence.
+*Is this just underpowered?*
 
-**"Did you tune λ?"**  
-No. A single fixed λ (0.1) is used. There are no hyperparameter sweeps in the decisive experiments.
+No. The decisive claim is about locality at k=1. Additional k-step diagnostics exist, but the falsifier's target is the single-step locality assumption.
 
-**"Isn't this just optimization failure?"**  
-No. Jacobian and HVP constraints explicitly test *local* recoverability—whether function is encoded in the local geometry at all. The optimization successfully minimizes the constraint (matching the geometry) but fails to recover the function.
+*Did you tune λ?*
 
-**"Is this specific to RNNs?"**  
-This repo tests RNNs, but the theoretical implications regarding the non-equivalence of geometric and functional basins generalize to other high-dimensional parameterized systems.
+No. Decisive tests use fixed protocol parameters. The design goal is to avoid p-hacking degrees of freedom.
+
+*Isn't this just optimization failure?*
+
+No, in the specific sense tested: the constrained optimization can succeed at matching the proxy (spectra/CKA/J/HVP) while failing to recover function. That is exactly the decoupling.
+
+*Is this specific to RNNs?*
+
+The testbed is an RNN loop. The output is a concrete counterexample: local proxies can be satisfied while function is not locally recovered. Any generalization beyond that is an empirical question—hence the roadmap "architecture contact tests."
 
 ---
 
 ## Experimental Hygiene
 
-- ✅ **Deterministic**: Fixed `perturb_seed`, `eval_seed`, and `recovery_seed`
-- ✅ **Austere**: No dashboards, no tuning loops, no cosmetic complexity
-- ✅ **Clean**: No deprecated experiments required to run results
-- ✅ **Hostile to p-hacking**: Single-shot, fixed-seed, no cherry-picked plots
-- ✅ Every claim tied to a single falsifiable test
+- ✅  **Deterministic:** Fixed seeds (`perturb_seed`, `eval_seed`, `recovery_seed`)
+- ✅  **Austere:** No tuning loops, no dashboards, no hyperparameter sweeps in decisive runs
+- ✅  **Hostile to p-hacking:** Single-shot, fixed-seed, criterion-locked protocols
+- ✅  **Every headline claim tied to a falsifiable test you can re-run**
+
+---
+
+## Repository Structure
+
+```
+autodidactic-qml/
+├── autodidactic_loop_schematic.png
+├── protocols/
+│   ├── KT1_FALSIFICATION_PROTOCOL.md
+│   └── KT2_FALSIFICATION_PROTOCOL.md
+├── experiments/
+│   ├── kt1_continuation_interest.py
+│   └── kt2_locality_falsifier.py
+├── src/
+│   ├── ucip_detection/
+│   ├── correspondence_maps/
+│   ├── matrix_models/
+│   └── topology/
+├── tests/
+├── notebooks/
+└── results/
+```
 
 ---
 
 ## Status
 
-- ✅ All decisive experiments implemented
-- ✅ Deterministic CI pipeline (fixed seeds)
-- ✅ Clean negative results (knife-edge 1-step)
-- ✅ Release build 1.0
+- ✅  All decisive KT-2 experiments implemented
+- ✅  Deterministic CI pipeline (fixed seeds)
+- ✅  Clean negative results at k=1
+- ✅  Ready for public release
 
 ---
 
 ## Tags
 
-`neural-networks` `interpretability` `functional-basins` `locality` `autodidactic` `matrix-models` `rnn` `continuation-interest` `robustness` `alignment` `ucip` `self-preservation` `k-valuation`
+`neural-networks` `interpretability` `functional-basins` `locality` `autodidactic` `matrix-models` `rnn` `continuation-interest` `robustness` `alignment` `ucip`
 
 ---
 
-## Why This Matters
+## Roadmap
 
-**For interpretability researchers:** Local structure (weights, spectra, representations, Jacobians, curvature) does not encode functional identity in a recoverable way. Methods relying on these proxies may be systematically misleading.
+High-signal next experiments (no scope creep):
 
-**For alignment researchers:** If functional identity is genuinely nonlocal, then verification and monitoring approaches based on local probes may have fundamental blind spots.
+### 1. CI(k) Curves ("Locality Radius")
 
-**For robustness researchers:** The distinction between geometric and functional basins has direct implications for fine-tuning stability, model editing, and adversarial robustness.
+Compute CI(k) over an η (step size) grid and a small k horizon (e.g., k ∈ {1…50}), holding protocol fixed. This tests whether "local failure" is truly knife-edge at k=1 or persists across a neighborhood.
 
-**For AI welfare/ethics researchers:** The UCIP protocol provides falsifiable tests for detecting continuation interests in AI systems—distinguishing terminal self-preservation from instrumental optimization artifacts.
+### 2. Invariant-Constrained Recovery (Clean Add-on)
 
----
+During recovery, add a penalty pulling chosen invariants back toward pre-perturbation values:
 
+$$
+L_{\text{total}} = L_{\text{task}} + \lambda \sum_k \left(I_k(\theta_t)-I_k(\theta_{\text{pre}})\right)^2
+$$
 
-## Protocols
+This does not "pick the answer"; it enforces return to a declared equivalence class. If CI rises substantially, invariants are acting as a stability scaffold. If CI stays ~0, the nonlocality claim strengthens.
 
-This repository includes pre-registered falsification protocols for testing specific claims. Protocols are **LOCKED** to prevent post-hoc criterion drift.
+### 3. Architecture Contact Test (Minimal Transformer)
 
-| Protocol | Description | File |
-|----------|-------------|------|
-| **KT-1** | Topology–Perturbation Memory Test (SQNT plasticity) | [`protocols/KT1_TOPOLOGY_MEMORY.md`](protocols/KT1_TOPOLOGY_MEMORY.md) |
-| **KT-2** | Local Recoverability of Functional Identity (CI) | [`protocols/KT2_LOCAL_RECOVERABILITY_CI.md`](protocols/KT2_LOCAL_RECOVERABILITY_CI.md) |
+Replicate KT-2 logic on a small autoregressive Transformer: match representations (e.g., layer-wise CKA) after perturbation and measure whether perplexity/capability recovers locally. This directly tests whether the proxy/function decoupling survives outside the RNN loop.
 
----
+### 4. Generative Analog (Diffusion as Recovery Operator)
 
-## Citation
-
-If you use or build on this work, please cite:
-
-> *Geometric Basins Are Not Functional Basins: Functional Identity Is Not Locally Recoverable in Neural Networks* (preprint forthcoming)
-
-```bibtex
-@software{altman2025autodidactic,
-  author = {Altman, Christopher},
-  title = {Geometric Basins Are Not Functional Basins: Functional Identity Is Not Locally Recoverable in Neural Networks},
-  year = {2025},
-  url = {https://github.com/christopher-altman/autodidactic-qml}
-}
-```
+Treat diffusion purification as the recovery step and define "function" explicitly (distributional vs conditional). Then ask the same question: does proxy recovery imply functional recovery?
 
 ---
 
 ## References
 
-- Lee Smolin et al., **“The Autodidactic Universe”**, arXiv:2104.03902.  
-  https://doi.org/10.48550/arXiv.2104.03902  
-  https://arxiv.org/abs/2104.03902
+1. C. Altman, J. Pykacz & R. Zapatrin, "Superposed Quantum Network Topologies", *International Journal of Theoretical Physics* 43, 2029–2041 (2004).  
+   DOI: [10.1023/B:IJTP.0000049008.51567.ec](https://doi.org/10.1023/B:IJTP.0000049008.51567.ec) · arXiv: [q-bio/0311016](https://arxiv.org/abs/q-bio/0311016)
 
-- C. Altman, J. Pykacz & R. Zapatrin, **“Superposed Quantum Network Topologies”**, *International Journal of Theoretical Physics* **43**, 2029–2041 (2004).  
-  https://ui.adsabs.harvard.edu/abs/2004IJTP...43.2029A/abstract  
-  https://doi.org/10.1023/B:IJTP.0000049008.51567.ec  
-  https://arxiv.org/abs/q-bio/0311016
+2. C. Altman & R. Zapatrin, "Backpropagation in Adaptive Quantum Networks", *International Journal of Theoretical Physics* 49, 2991–2997 (2010).  
+   DOI: [10.1007/s10773-009-0103-1](https://doi.org/10.1007/s10773-009-0103-1) · arXiv: [0903.4416](https://arxiv.org/abs/0903.4416)
 
-- C. Altman & R. Zapatrin, **“Backpropagation in Adaptive Quantum Networks”**, *International Journal of Theoretical Physics* **49**, 2991–2997 (2010).  
-  https://ui.adsabs.harvard.edu/abs/2010IJTP...49.2991A/abstract  
-  https://doi.org/10.1007/s10773-009-0103-1  
-  https://arxiv.org/abs/0903.4416
+3. S. Alexander, W. J. Cunningham, J. Lanier, L. Smolin, S. Stanojevic, M. W. Toomey & D. Wecker, "The Autodidactic Universe", arXiv (2021).  
+   DOI: [10.48550/arXiv.2104.03902](https://doi.org/10.48550/arXiv.2104.03902) · arXiv: [2104.03902](https://arxiv.org/abs/2104.03902)
 
 ---
+
+## Citations
+
+If you use or build on this work, please cite:
+
+> Geometric basins are not functional basins: functional identity is not locally recoverable in neural networks
+
+```bibtex
+@software{altman2025autodidactic,
+  author = {Altman, Christopher},
+  title = {Geometric basins are not functional basins: functional identity is not locally recoverable in neural networks},
+  year = {2025},
+  url = {https://github.com/christopher-altman/autodidactic-qml}
+}
+```
+
+<!-- TODO: Add Zenodo DOI citation once released for archival citability -->
+
+---
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
@@ -472,14 +623,11 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- Website: https://christopheraltman.com
-- GitHub: https://github.com/christopher-altman
-- Google Scholar: https://scholar.google.com/citations?user=tvwpCcgAAAAJ
-
+- **Website:** [christopheraltman.com](https://christopheraltman.com)
+- **GitHub:** [github.com/christopher-altman](https://github.com/christopher-altman)
+- **Google Scholar:** [scholar.google.com/citations?user=tvwpCcgAAAAJ](https://scholar.google.com/citations?user=tvwpCcgAAAAJ)
+- **Email:** chris@christopheraltman.com
 
 ---
 
-The repository is intentionally austere.  
-The result is not.
-
-- Email: x@christopheraltman.com
+*Christopher Altman, 2025*

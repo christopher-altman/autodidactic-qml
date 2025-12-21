@@ -5,7 +5,7 @@ from typing import Dict
 
 @dataclass(frozen=True)
 class PhaseTransitionMetrics:
-    """Toy phase-transition heuristics: look for sharp changes in observables."""
+    """Minimal testbed phase-transition heuristics: look for sharp changes in observables."""
 
     def metric(self, xs: np.ndarray) -> Dict[str, float]:
         xs = np.asarray(xs, dtype=float).reshape(-1)

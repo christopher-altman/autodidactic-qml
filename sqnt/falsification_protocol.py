@@ -40,7 +40,7 @@ OBSERVABLES (logged):
     • Post-recovery topology similarity
     • Perturbation-location dependence
 
-FALSIFICATION CRITERIA (ANY → SQNT FAILS):
+FALSIFICATION CRITERIA (ANY → SQNT DOES NOT HOLD):
     1. No significant difference between System A and B
     2. System A statistically indistinguishable from C
     3. No topology memory after recovery

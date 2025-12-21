@@ -40,7 +40,7 @@ def main():
     args = parse_args()
     rng = np.random.default_rng(args.seed)
 
-    # 1) Sample a matrix from the matrix model distribution (toy cubic model)
+    # 1) Sample a matrix from the matrix model distribution (minimal controlled cubic model)
     ens = HermitianEnsemble(dim=args.dim, scale=1.0, seed=args.seed)
     M0 = ens.sample(rng=rng)
     action = CubicAction(g=args.g)

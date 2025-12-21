@@ -20,7 +20,7 @@ from analysis.spectral_diagnostics import SpectralDiagnostics
 from analysis.phase_transition_metrics import PhaseTransitionMetrics
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Scan coupling parameter g for toy phase-like transitions.")
+    p = argparse.ArgumentParser(description="Scan coupling parameter g for minimal controlled phase-like transitions.")
     p.add_argument("--dim", type=int, default=10)
     p.add_argument("--steps", type=int, default=800)
     p.add_argument("--dt", type=float, default=1e-3)

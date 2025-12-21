@@ -8,7 +8,7 @@ class HermitianEnsemble:
     """Generator for random real-symmetric (Hermitian over R) matrices.
 
     We use real-symmetric matrices by default because they're fast and
-    already capture the key invariants used in many toy matrix models
+    already capture the key invariants used in many minimal controlled matrix models
     (spectra, trace powers, conjugation by orthogonals).
 
     Parameters

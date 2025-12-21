@@ -22,7 +22,7 @@ class QuadraticAction:
 class CubicAction:
     """S[M] = Tr(M^2 + g M^3)
 
-    This is the minimal non-Gaussian toy used throughout the repo.
+    This is the minimal non-Gaussian controlled model used throughout the repo.
     """
     g: float = 0.1
 

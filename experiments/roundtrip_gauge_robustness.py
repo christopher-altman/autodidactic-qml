@@ -65,7 +65,7 @@ def main():
     rng = np.random.default_rng(args.seed)
     torch.manual_seed(args.seed)
 
-    # 1) Sample a symmetric matrix M from the toy cubic matrix model.
+    # 1) Sample a symmetric matrix M from the minimal controlled model cubic matrix model.
     ens = HermitianEnsemble(dim=args.dim, scale=1.0, seed=args.seed)
     M0 = ens.sample(rng=rng)
     action = CubicAction(g=args.g)

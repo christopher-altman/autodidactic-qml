@@ -12,7 +12,7 @@ def _stable_sigmoid(x: torch.Tensor) -> torch.Tensor:
 class MatrixToCyclicRNN:
     """Map a symmetric matrix M to a small cyclic RNN.
 
-    Idea (toy but operational):
+    Idea (minimal controlled model but operational):
     - eigenvalues set stability/decay (spectral radius control)
     - eigenvectors seed recurrent weights in a gauge-invariant-ish way (since spectrum is invariant under conjugation)
 

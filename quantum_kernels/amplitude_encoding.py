@@ -22,7 +22,7 @@ class AmplitudeEncoder:
     For input x:
       |psi(x)> = x / ||x||
 
-    This is classical preprocessing + quantum state initialization (toy).
+    This is classical preprocessing + quantum state initialization (minimal controlled model).
     """
 
     def encode(self, x: np.ndarray) -> np.ndarray:

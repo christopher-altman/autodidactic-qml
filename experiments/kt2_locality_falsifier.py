@@ -398,6 +398,8 @@ def main():
     # Test selection
     parser.add_argument("--run-decisive", action="store_true",
                         help="Run decisive 1-step test (primary falsification)")
+    parser.add_argument("--one-step-only", action="store_true",
+                        help="Alias for --run-decisive (run only the 1-step test)")
     parser.add_argument("--k-step-curve", action="store_true",
                         help="Run k-step CI curve for nonlocality signature")
     parser.add_argument("--hysteresis", action="store_true",
@@ -423,6 +425,13 @@ def main():
     
     args = parser.parse_args()
     
+    if args.one_step_only:
+        args.run_decisive = True
+        args.k_step_curve = False
+        args.hysteresis = False
+        args.step_envelope = False
+        args.full_protocol = False
+
     # Default to full protocol if nothing specified
     if not any([args.run_decisive, args.k_step_curve, args.hysteresis, args.step_envelope, args.full_protocol]):
         args.full_protocol = True

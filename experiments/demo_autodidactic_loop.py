@@ -262,9 +262,9 @@ def main():
             print(f"  {'Jacobian-CI':<18} {jac_res.CI:>10.4f} {jac_res.recovered_loss:>12.4f}")
             
             if jac_res.CI >= 0.3:
-                print("\n  ✓ PASS: Functional basin exists (Jacobian-defined).")
+                print("\n  ✓ Signal detected: Functional basin exists (Jacobian-defined).")
             elif jac_res.CI <= 0.05:
-                print("\n  ✗ FAIL: No locally recoverable functional basin (1-step).")
+                print("\n  ✗ No signal detected: No locally recoverable functional basin (1-step).")
             else:
                 print("\n  ~ WEAK: Partial constraint; likely global/implicit structure.")
             

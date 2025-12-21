@@ -1,9 +1,9 @@
 """Representation-preserving constraints for functional basin testing.
 
 ==============================================================================
-IMPORTANT: FAILURE DEMONSTRATION MODULE
+IMPORTANT: NEGATIVE DEMONSTRATION MODULE
 ==============================================================================
-This module demonstrates a FAILURE MODE: representation similarity (Gram/CKA)
+This module demonstrates a NEGATIVE MODE: representation similarity (Gram/CKA)
 does NOT imply functional recovery.
 
 The experiments in this repository show that even when CKA approaches 1.0

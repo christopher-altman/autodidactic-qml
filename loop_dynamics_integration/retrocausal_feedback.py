@@ -7,7 +7,7 @@ from typing import Dict, Optional, List
 
 @dataclass
 class TimeSymmetricGradientSmoother:
-    """A toy 'retrocausal' mechanism: time-symmetric smoothing of gradients.
+    """A minimal controlled model 'retrocausal' mechanism: time-symmetric smoothing of gradients.
 
     This is a controlled sandbox:
     - Run a short trajectory producing gradients g_t
