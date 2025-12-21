@@ -23,11 +23,11 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 [![Google Scholar](https://img.shields.io/badge/Google_Scholar-Profile-blue?logo=google-scholar)](https://scholar.google.com/citations?user=tvwpCcgAAAAJ)
 [![Hugging Face](https://img.shields.io/badge/huggingface-Cohaerence-green)](https://huggingface.co/Cohaerence)
 [![X](https://img.shields.io/badge/X-@coherence-white)](https://x.com/coherence)
 [![Website](https://img.shields.io/badge/website-christopheraltman.com-blue)](https://www.christopheraltman.com)
+<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 
 ---
 
