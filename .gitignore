@@ -51,7 +51,8 @@ temp/
 phase_diagram_data.json
 
 # ---- Private working notes (not for public repo) ----
-docs/
+
 private/
-CHANGELOG.md
+
 cleanup_for_github.sh
+results/
