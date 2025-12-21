@@ -28,7 +28,7 @@ references:
     url: "https://arxiv.org/abs/2104.03902"
 
   - type: article
-    title: "Superposed Quantum Network Topologies"
+    title: "Superpositional Quantum Network Topologies"
     authors:
       - family-names: Altman
         given-names: Christopher
