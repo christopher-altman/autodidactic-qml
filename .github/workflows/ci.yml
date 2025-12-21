@@ -14,10 +14,10 @@ jobs:
         python-version: ["3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -31,12 +31,11 @@ jobs:
         pytest tests/
 
     - name: Run decisive falsification (Quick)
-      # Running the decisive test to ensure it completes and produces the artifact
       run: |
         python -m experiments.kt2_locality_falsifier --run-decisive --quiet
 
     - name: Upload Decision Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: decisive-result-${{ matrix.python-version }}
-        path: experiments/outputs/kt2/kt2_decisive_1step.json
+        path: results/kt2_decisive_1step.json
