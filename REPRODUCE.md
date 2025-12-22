@@ -71,3 +71,13 @@ Outputs:
 - `results/kt2_robustness_grid.csv` (tabular per-run results)
 
 This demonstrates that the decisive result is not a single lucky seed.
+
+## Negative Control
+
+Prove the harness can restore function when optimizing for function directly:
+
+```bash
+python -m experiments.kt2_locality_falsifier --negative-control
+```
+
+Outputs: `results/kt2_negative_control.json`

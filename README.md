@@ -21,7 +21,7 @@
 
 > **TL;DR:** Geometric proximity ≠ functional proximity. This repository provides reproducible evidence that restoring local parameter/representation/gradient structure does not restore behavior in neural networks.
 >
-> **Primary Claim:** See [docs/claim.md](docs/claim.md) (LOCKED upon next release tag)
+> **Primary Claim:** See [docs/claim.md](docs/claim.md) (LOCKED as of v0.2.0)
 
 <br>
 
@@ -482,6 +482,14 @@ python -m experiments.kt2_robustness_grid
 ```
 
 Tests the decisive result across 30 runs (3 dimensions × 10 seeds) to demonstrate it's not a lucky seed. See [REPRODUCE.md](REPRODUCE.md#robustness-grid) and [docs/claim.md](docs/claim.md) for details.
+
+### 1c. Negative control (harness can recover when optimizing for function)
+
+```bash
+python -m experiments.kt2_locality_falsifier --negative-control
+```
+
+Outputs: `results/kt2_negative_control.json`
 
 ### 2. Run the full KT-2 protocol (artifact output)
 
