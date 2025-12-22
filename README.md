@@ -20,6 +20,8 @@
 <br>
 
 > **TL;DR:** Geometric proximity ≠ functional proximity. This repository provides reproducible evidence that restoring local parameter/representation/gradient structure does not restore behavior in neural networks.
+>
+> **Primary Claim:** See [docs/claim.md](docs/claim.md) (LOCKED upon next release tag)
 
 <br>
 
@@ -472,6 +474,14 @@ All decisive runs are deterministic from the given seeds.
 ```bash
 python -m experiments.kt2_locality_falsifier --run-decisive
 ```
+
+### 1b. Run the robustness grid (replicability across seeds and dimensions)
+
+```bash
+python -m experiments.kt2_robustness_grid
+```
+
+Tests the decisive result across 30 runs (3 dimensions × 10 seeds) to demonstrate it's not a lucky seed. See [REPRODUCE.md](REPRODUCE.md#robustness-grid) and [docs/claim.md](docs/claim.md) for details.
 
 ### 2. Run the full KT-2 protocol (artifact output)
 

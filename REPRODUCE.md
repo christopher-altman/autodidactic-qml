@@ -57,3 +57,17 @@ All decisive experiments use locked seeds:
 -   `recovery_seed=2025`: Controls the stochastic gradient descent path (if applicable).
 
 No hyperparameter sweeping is performed during the decisive run. The parameters are fixed in `protocols/KT-2`.
+
+## Robustness Grid
+
+Test replicability across 30 runs (3 dimensions × 10 seeds):
+
+```bash
+python -m experiments.kt2_robustness_grid
+```
+
+Outputs:
+- `results/kt2_robustness_grid.json` (full raw data + summary + provenance)
+- `results/kt2_robustness_grid.csv` (tabular per-run results)
+
+This demonstrates that the decisive result is not a single lucky seed.

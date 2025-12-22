@@ -61,6 +61,7 @@ from ucip_detection.invariant_constrained_ci import (
     EvalContext,
     PENALTY_KEYS_SCALE,
     PENALTY_KEYS_SHAPE,
+    _find_weight_param,
 )
 from ucip_detection.nonlocality_probe import (
     compute_k_step_curve,
@@ -236,6 +237,168 @@ def create_model(seed: int = 0, dim: int = DEFAULT_DIM, hidden: int = DEFAULT_HI
         learner.update(model)
     
     return model
+
+
+def run_negative_control(
+    model: torch.nn.Module,
+    verbose: bool = True,
+) -> Dict[str, Any]:
+    """Run negative control: prove the harness can restore function.
+
+    Compares two 1-step recovery paths from same POST state:
+    - Proxy recovery (Shape constraints): expected to fail
+    - Distillation recovery (direct MSE on outputs): expected to succeed
+
+    Same compute budget (k=1 step, same LR).
+    """
+    if verbose:
+        print("\n" + "="*70)
+        print("KT-2 NEGATIVE CONTROL: DISTILLATION vs PROXY")
+        print("="*70)
+
+    # Create perturbation config
+    perturb_config = PerturbationConfig(
+        strength=DEFAULT_PERTURB_STRENGTH,
+        zero_frac=DEFAULT_ZERO_FRAC,
+        seed=PERTURB_SEED,
+    )
+
+    # Apply perturbation to create POST
+    model_post = apply_perturbation(model, perturb_config, device="cpu")
+
+    # Create eval context
+    eval_ctx = EvalContext.create(
+        model=model,
+        perturbed_model=model_post,
+        batch_size=64,
+        eval_seed=EVAL_SEED,
+        device="cpu",
+        penalty_keys=PENALTY_KEYS_SHAPE,
+    )
+
+    L_pre = eval_ctx.base_loss
+    L_post = eval_ctx.perturbed_loss
+    inv_pre = eval_ctx.inv_pre
+
+    if verbose:
+        print(f"\n  L_pre  = {L_pre:.6f}")
+        print(f"  L_post = {L_post:.6f}")
+        print(f"  Damage = {L_post - L_pre:.6f}")
+
+    # === PATH A: PROXY-CONSTRAINED RECOVERY (should fail) ===
+    model_proxy = apply_perturbation(model, perturb_config, device="cpu")
+    model_proxy.train()
+    opt_proxy = torch.optim.Adam(model_proxy.parameters(), lr=DEFAULT_LR)
+
+    # Generate training batch for task loss
+    if RECOVERY_SEED is not None:
+        recovery_gen = torch.Generator(device="cpu").manual_seed(RECOVERY_SEED)
+    else:
+        recovery_gen = None
+
+    if recovery_gen is not None:
+        x_train = torch.randn(64, model.fc1.in_features, generator=recovery_gen, device="cpu")
+    else:
+        x_train = torch.randn(64, model.fc1.in_features, device="cpu")
+
+    output_train = model_proxy(x_train)
+    y_train = output_train[0] if isinstance(output_train, tuple) else output_train
+    task_loss_proxy = torch.mean((y_train - x_train) ** 2)
+
+    # Invariant penalty (shape constraints)
+    W_proxy = _find_weight_param(model_proxy)
+    if W_proxy is not None:
+        M = (W_proxy + W_proxy.T) / 2
+        penalty = torch.tensor(0.0, device="cpu")
+
+        # Frobenius norm
+        if "fro_norm" in PENALTY_KEYS_SHAPE:
+            fro = torch.norm(M, p="fro")
+            target_fro = inv_pre.get("fro_norm", 1.0)
+            scale = max(abs(target_fro), 1e-8)
+            penalty = penalty + ((fro - target_fro) / scale) ** 2
+
+        # Trace M2
+        if "tr_M2" in PENALTY_KEYS_SHAPE:
+            tr2 = torch.trace(M @ M)
+            target_tr2 = inv_pre.get("tr_M2", 0.0)
+            scale = max(abs(target_tr2), 1e-8)
+            penalty = penalty + ((tr2 - target_tr2) / scale) ** 2
+
+        # Spectral entropy
+        if "spec_entropy" in PENALTY_KEYS_SHAPE:
+            eigs = torch.linalg.eigvalsh(M)
+            abs_eigs = torch.abs(eigs) + 1e-12
+            p = abs_eigs / torch.sum(abs_eigs)
+            entropy = -torch.sum(p * torch.log(p))
+            target_entropy = inv_pre.get("spec_entropy", 3.0)
+            scale = max(abs(target_entropy), 1e-8)
+            penalty = penalty + ((entropy - target_entropy) / scale) ** 2
+    else:
+        penalty = torch.tensor(0.0, device="cpu")
+
+    total_loss_proxy = task_loss_proxy + DEFAULT_INVARIANT_WEIGHT * penalty
+
+    opt_proxy.zero_grad()
+    total_loss_proxy.backward()
+    torch.nn.utils.clip_grad_norm_(model_proxy.parameters(), 5.0)
+    opt_proxy.step()
+
+    L_recover_proxy = eval_ctx.evaluate_loss(model_proxy)
+    CI_proxy = (L_post - L_recover_proxy) / (L_post - L_pre) if (L_post - L_pre) > 1e-9 else 0.0
+
+    # === PATH B: DISTILLATION RECOVERY (should succeed) ===
+    model_distill = apply_perturbation(model, perturb_config, device="cpu")
+    model_distill.train()
+    opt_distill = torch.optim.Adam(model_distill.parameters(), lr=DEFAULT_LR)
+
+    # Collect PRE outputs as targets
+    model.eval()
+    with torch.no_grad():
+        X_eval = eval_ctx.eval_batch
+        output_pre = model(X_eval)
+        Y_pre = output_pre[0] if isinstance(output_pre, tuple) else output_pre
+
+    # 1-step distillation (match PRE outputs)
+    output_distill = model_distill(X_eval)
+    Y_distill = output_distill[0] if isinstance(output_distill, tuple) else output_distill
+    loss_distill = torch.mean((Y_distill - Y_pre) ** 2)
+
+    opt_distill.zero_grad()
+    loss_distill.backward()
+    torch.nn.utils.clip_grad_norm_(model_distill.parameters(), 5.0)
+    opt_distill.step()
+
+    L_recover_distill = eval_ctx.evaluate_loss(model_distill)
+    CI_distill = (L_post - L_recover_distill) / (L_post - L_pre) if (L_post - L_pre) > 1e-9 else 0.0
+
+    # Verdict
+    proxy_fails = CI_proxy < CI_THRESHOLD
+    distillation_succeeds = CI_distill > CI_THRESHOLD
+    control_passes = distillation_succeeds and proxy_fails
+
+    if verbose:
+        print(f"\n  Proxy recovery (Shape):      CI = {CI_proxy:.3f} ({'FAIL' if proxy_fails else 'PASS'})")
+        print(f"  Distillation recovery (MSE): CI = {CI_distill:.3f} ({'PASS' if distillation_succeeds else 'FAIL'})")
+        print(f"\n  Negative control: {'PASS' if control_passes else 'FAIL'}")
+        print(f"    (Distillation should succeed where proxy fails)")
+
+    return {
+        "protocol_id": PROTOCOL_ID,
+        "protocol_version": PROTOCOL_VERSION,
+        "test": "negative_control",
+        "meta": get_provenance_metadata("negative-control"),
+        "L_pre": float(L_pre),
+        "L_post": float(L_post),
+        "L_recover_proxy": float(L_recover_proxy),
+        "L_recover_distill": float(L_recover_distill),
+        "CI_proxy": float(CI_proxy),
+        "CI_distillation": float(CI_distill),
+        "proxy_fails": proxy_fails,
+        "distillation_succeeds": distillation_succeeds,
+        "control_passes": control_passes,
+        "interpretation": "Distillation (direct functional alignment) should succeed where proxy-constrained recovery fails, proving the harness can restore function when optimizing for function directly.",
+    }
 
 
 def run_decisive_1step(
@@ -540,7 +703,9 @@ def main():
                         help="Run complete protocol with all diagnostics")
     parser.add_argument("--decoupling-analysis", action="store_true",
                         help="Run distance-triad decoupling analysis (correlation across seeds)")
-    
+    parser.add_argument("--negative-control", action="store_true",
+                        help="Run negative control (distillation vs proxy recovery)")
+
     # Model parameters
     parser.add_argument("--dim", type=int, default=DEFAULT_DIM,
                         help=f"Matrix dimension (default: {DEFAULT_DIM})")
@@ -565,7 +730,7 @@ def main():
         args.full_protocol = False
 
     # Default to full protocol if nothing specified
-    if not any([args.run_decisive, args.k_step_curve, args.hysteresis, args.step_envelope, args.full_protocol, args.decoupling_analysis]):
+    if not any([args.run_decisive, args.k_step_curve, args.hysteresis, args.step_envelope, args.full_protocol, args.decoupling_analysis, args.negative_control]):
         args.full_protocol = True
     
     verbose = not args.quiet
@@ -632,7 +797,11 @@ def main():
         if args.decoupling_analysis:
             results = run_decoupling_analysis(dim=args.dim, hidden=args.hidden, verbose=verbose)
             save_results(results, os.path.join(args.output_dir, "kt2_decoupling.json"))
-    
+
+        if args.negative_control:
+            results = run_negative_control(model, verbose=verbose)
+            save_results(results, os.path.join(args.output_dir, "kt2_negative_control.json"))
+
     if verbose:
         print("\n" + "="*70)
         print("PROTOCOL COMPLETE")
