@@ -56,3 +56,5 @@ private/
 
 cleanup_for_github.sh
 results/
+
+release_assets/
