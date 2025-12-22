@@ -1,6 +1,6 @@
 # Primary Claim and Endpoint
 
-**Status:** LOCKED upon next release tag (≥ v0.2.0)
+**Status:** LOCKED as of v0.2.0
 **Protocol:** KT-2 v1.0
 **No post-hoc modifications permitted after tag**
 
@@ -8,7 +8,7 @@
 
 ## The Claim (One Paragraph)
 
-Geometric/proxy proximity does not imply functional recovery in KT-2. Specifically: in a trained autodidactic matrix-to-RNN system, single-step constrained recovery that restores local geometric structure (0th-order spectral invariants, 1st-order Jacobian alignment, or 2nd-order Hessian-vector products) does NOT restore functional identity. Across all tested constraint families, CI(k=1) remains below threshold (0.10), demonstrating that geometric basins are not functional basins in this system.
+Geometric/proxy proximity does not imply functional recovery in KT-2. Specifically: in a trained autodidactic matrix-to-RNN system, single-step constrained recovery that restores local geometric structure (0th-order spectral invariants including Frobenius norm, trace moments, and spectral entropy) does NOT restore functional identity. Across all tested constraint families (None, Scale, Shape, Direct), CI(k=1) remains below threshold (0.10), demonstrating that geometric basins are not functional basins in this system.
 
 ---
 
@@ -48,11 +48,10 @@ All values defined as constants in `experiments/kt2_locality_falsifier.py`: `PER
 
 ## Constraint Families Tested
 
-1. **Scale** — Frobenius norm + trace(M²)
-2. **Shape** — Scale + spectral entropy
-3. **Jacobian** — 1st-order input-output sensitivity
-4. **Curvature** — 2nd-order HVP alignment
-5. **Direct** — Unconstrained task loss (control)
+1. **None** — Baseline (no constraints)
+2. **Scale** — Frobenius norm + trace(M²)
+3. **Shape** — Scale + spectral entropy
+4. **Direct** — Unconstrained task loss (control)
 
 ---
 
@@ -97,7 +96,7 @@ At k=1, three distances are measured:
 
 ## No Post-Hoc Changes Rule
 
-Once this repository is tagged with a release version ≥ v0.2.0, this claim and endpoint are LOCKED. Any modifications to:
+As of tag v0.2.0, this claim and endpoint are LOCKED. Any modifications to:
 - Seeds
 - Hyperparameters
 - Threshold
