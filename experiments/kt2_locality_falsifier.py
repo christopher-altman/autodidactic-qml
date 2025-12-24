@@ -352,17 +352,20 @@ def run_negative_control(
     model_distill.train()
     opt_distill = torch.optim.Adam(model_distill.parameters(), lr=DEFAULT_LR)
 
-    # Collect PRE outputs as targets
+    # Collect PRE outputs as targets (using training batch)
     model.eval()
     with torch.no_grad():
-        X_eval = eval_ctx.eval_batch
-        output_pre = model(X_eval)
+        output_pre = model(x_train)
         Y_pre = output_pre[0] if isinstance(output_pre, tuple) else output_pre
 
     # 1-step distillation (match PRE outputs)
-    output_distill = model_distill(X_eval)
+    output_distill = model_distill(x_train)
     Y_distill = output_distill[0] if isinstance(output_distill, tuple) else output_distill
     loss_distill = torch.mean((Y_distill - Y_pre) ** 2)
+
+    # Verify no train/eval leakage
+    assert not torch.equal(x_train, eval_ctx.eval_batch), \
+        "BUG: Distillation must train on x_train, not eval_ctx.eval_batch (data leakage)"
 
     opt_distill.zero_grad()
     loss_distill.backward()
