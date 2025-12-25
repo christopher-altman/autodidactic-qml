@@ -74,3 +74,7 @@ figures/
 # Local patch exports / reports
 *.patch
 KT2_REVIEW_PROOF_PATCH.md
+
+# Local-only files (do not track)
+.mailmap
+scripts/
