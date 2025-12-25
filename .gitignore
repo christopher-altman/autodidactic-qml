@@ -64,3 +64,13 @@ cleanup_for_github.sh
 results/
 
 release_assets/
+
+# Local runs / generated artifacts
+run1/
+run2/
+results/
+figures/
+
+# Local patch exports / reports
+*.patch
+KT2_REVIEW_PROOF_PATCH.md
