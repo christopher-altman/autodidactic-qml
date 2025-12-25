@@ -465,15 +465,53 @@ pip install -r requirements.txt
 
 ## Reproducing the Decisive Experiments
 
-All decisive runs are deterministic from the given seeds.
+All decisive KT-2 runs are deterministic and reproducible from locked seeds.
 
-**Decisive seeds:** `PERTURB_SEED=42`, `EVAL_SEED=12345`, `RECOVERY_SEED=2025`
+### Canonical Entry Point
+
+```bash
+python -m experiments.kt2_locality_falsifier
+```
+
+### Locked KT-2 Seeds
+
+The KT-2 protocol uses three pre-registered seeds to ensure identical reproduction:
+
+| Seed | Value | Purpose |
+|------|-------|---------|
+| `PERTURB_SEED` | 42 | Identical perturbation across all runs |
+| `EVAL_SEED` | 12345 | Deterministic evaluation batch |
+| `RECOVERY_SEED` | 2025 | Deterministic recovery dynamics |
+
+These seeds are hardcoded in `experiments/kt2_locality_falsifier.py` and must match across all documentation and code.
+
+### KT-2 Artifacts
+
+The KT-2 runner produces JSON artifacts in the output directory (default: `results/`, configurable via `--output-dir`). For the complete artifact manifest and schema, see [`docs/kt2_artifacts.md`](docs/kt2_artifacts.md).
+
+**Primary artifacts:**
+- `kt2_decisive_1step.json` — Decisive 1-step CI table (primary falsification test)
+- `kt2_k_step_curves.json` — CI(k) for k ∈ {1,2,4,8,16}
+- `kt2_hysteresis.json` — Forward/reverse sweep with area measurement
+- `kt2_step_envelope.json` — Best 1-step CI over step-size grid
+- `kt2_distance_triads.json` — Parameter + representation + functional distances
+- `kt2_decoupling.json` — Distance-triad decoupling analysis across seeds
+- `kt2_full_protocol.json` — Complete protocol output with verdict
+- `kt2_negative_control.json` — Negative control (distillation vs proxy, in `results/` root)
+
+### Lockfile Installation (Audit-Grade Reproduction)
+
+If a lockfile exists (e.g., `requirements-lock.txt`, `uv.lock`, `poetry.lock`), prefer installing from it for exact dependency reproduction; otherwise use `requirements.txt`.
 
 ### 1. Run the decisive 1-step KT-2 test (recommended first)
 
 ```bash
 python -m experiments.kt2_locality_falsifier --run-decisive
 ```
+
+**Expected artifact:** `results/kt2_decisive_1step.json`
+
+**What you should see:** Terminal output ending with `VERDICT: FALSIFIED` if all CI(k=1) < 0.10.
 
 ### 1b. Run the robustness grid (replicability across seeds and dimensions)
 
@@ -488,12 +526,11 @@ Tests the decisive result across 30 runs (3 dimensions × 10 seeds) to demonstra
 Note: this negative control now checks **1-step in-batch distillation MSE improvement** as the pass criterion (sanity), while reporting held-out **eval CI as diagnostic only**.
 The anti-leak unit tests are designed to be **stable/signature-agnostic** (no fragile call-order assumptions).
 
-
 ```bash
 python -m experiments.kt2_locality_falsifier --negative-control
 ```
 
-Outputs: `results/kt2_negative_control.json`
+**Expected artifact:** `results/kt2_negative_control.json`
 
 ### 2. Run the full KT-2 protocol (artifact output)
 
@@ -501,11 +538,15 @@ Outputs: `results/kt2_negative_control.json`
 python -m experiments.kt2_locality_falsifier --full-protocol
 ```
 
+**Expected artifact:** `results/kt2_full_protocol.json`
+
 ### 3. Step-size envelope (best 1-step CI over η grid)
 
 ```bash
 python -m experiments.kt2_locality_falsifier --step-envelope
 ```
+
+**Expected artifact:** `results/kt2_step_envelope.json`
 
 ### 4. k-step curve (nonlocality signature)
 
@@ -513,13 +554,25 @@ python -m experiments.kt2_locality_falsifier --step-envelope
 python -m experiments.kt2_locality_falsifier --k-step-curve
 ```
 
-### 5. Optional: Hysteresis / path dependence
+**Expected artifact:** `results/kt2_k_step_curves.json`
+
+### 5. Hysteresis / path dependence
 
 ```bash
 python -m experiments.kt2_locality_falsifier --hysteresis
 ```
 
-### 6. Optional: UCIP probes
+**Expected artifact:** `results/kt2_hysteresis.json`
+
+### 6. Decoupling analysis (distance triads across seeds)
+
+```bash
+python -m experiments.kt2_locality_falsifier --decoupling-analysis
+```
+
+**Expected artifact:** `results/kt2_decoupling.json`
+
+### 7. Optional: UCIP probes
 
 ```bash
 python -m experiments.ucip_probes
