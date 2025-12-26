@@ -162,7 +162,7 @@ graph TD
   AT --> AU
   AU -. feedback .-> W
 
-  AU --> KT2START["KT-2 Evaluation Wrapper"]
+  AU --> KT2START
   KT2START --> WP["PRE anchor\nW_pre"]
   WP --> PI["Perturbation Π\n(intervention)"]
   PI --> WO["POST state\nW_post"]
@@ -317,7 +317,7 @@ This is the core negative result: in this system, restoring local geometry (0th 
 
 ## What This Is and Is Not
 
-This repository is a **deliberately constrained falsifier**. It is engineered to answer one question cleanly:
+This repository is a **deliberately constrained falsifier**. It is engineered to cleanly answer one question:
 
 > *Does “local structural proximity” (0th–2nd order information) imply local recoverability of function after damage?*
 
@@ -459,7 +459,7 @@ $$
 
 $$
 C_J(W, W_{\mathrm{pre}}) =
-1 - \cos\left(\mathrm{vec}(J_W(x_{\mathrm{pre}})),\, \mathrm{vec}(J_{W_{\mathrm{pre}}}(x_{\mathrm{pre}}))\right)
+1 - \cos\left(\mathrm{vec}(J_W(x_{\mathrm{pre}})), \mathrm{vec}(J_{W_{\mathrm{pre}}}(x_{\mathrm{pre}}))\right)
 $$
 
 **(5) Second-order local curvature (Hessian–vector product alignment along probe direction v):**
